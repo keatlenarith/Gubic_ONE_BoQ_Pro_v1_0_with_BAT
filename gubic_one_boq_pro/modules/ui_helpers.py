@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 import base64
+import html
 
 import pandas as pd
 import streamlit as st
@@ -178,9 +179,32 @@ def inject_css() -> None:
         .gubic-insight-title {{ color: #607087; font-weight: 800; font-size: .78rem; line-height: 1.65; }}
         .gubic-insight-value {{ color: {BRAND_COLOR}; font-weight: 900; font-size: 1.1rem; line-height: 1.55; margin-top: .15rem; }}
         .gubic-insight-comment {{ color: #4E5D70; font-size: .85rem; line-height: 1.75; margin-top: .25rem; }}
+        .gubic-insight-native-title {{ color: #607087; font-weight: 800; font-size: .86rem; line-height: 1.65; }}
+        .gubic-insight-native-value {{ color: {BRAND_COLOR}; font-weight: 900; font-size: 1.25rem; line-height: 1.55; margin: .15rem 0; }}
         .gubic-sidebar-brand {{ margin: -0.3rem 0 .75rem 0; padding-bottom: .85rem; border-bottom: 1px solid #E6ECF2; }}
-        .gubic-sidebar-title {{ color: {BRAND_COLOR}; font-weight: 900; font-size: 1.08rem; line-height: 1.15; }}
-        .gubic-sidebar-subtitle {{ color: #607087; font-size: .82rem; margin-top: .15rem; }}
+        .gubic-sidebar-brand-card {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: .35rem 0 .9rem 0;
+            border-bottom: 1px solid #E6ECF2;
+            margin-bottom: .85rem;
+        }}
+        .gubic-sidebar-logo-box {{
+            width: 64px;
+            height: 64px;
+            min-width: 64px;
+            border-radius: 18px;
+            background: #FFFFFF;
+            border: 1px solid #E6ECF2;
+            box-shadow: 0 4px 14px rgba(27, 54, 93, .06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .gubic-sidebar-logo-box img {{ width: 46px; height: 46px; object-fit: contain; display: block; }}
+        .gubic-sidebar-title {{ color: {BRAND_COLOR}; font-weight: 900; font-size: 1.08rem; line-height: 1.35; }}
+        .gubic-sidebar-subtitle {{ color: #607087; font-size: .82rem; margin-top: .15rem; line-height: 1.45; }}
         .gubic-sidebar-section {{ color: #607087; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; margin: .7rem 0 .2rem 0; }}
         section[data-testid="stSidebar"] a {{
             line-height: 1.55 !important;
@@ -251,14 +275,22 @@ def inject_css() -> None:
 
 
 def render_sidebar_brand() -> None:
-    """Render the Gubic logo and product mark in the sidebar."""
-    if LOGO_PATH.exists():
-        st.sidebar.image(str(LOGO_PATH), width=92)
+    """Render the Gubic logo and product mark in the sidebar.
+
+    Use an inline image instead of Streamlit's default image widget so the
+    logo stays attached to the tool name and does not disappear when the
+    sidebar rerenders or when Streamlit Cloud changes the default nav layout.
+    """
+    logo_uri = _logo_data_uri()
+    logo_html = f"<img src='{logo_uri}' alt='Gubic logo'>" if logo_uri else ""
     st.sidebar.markdown(
         f"""
-        <div class='gubic-sidebar-brand'>
-            <div class='gubic-sidebar-title'>Gubic ONE</div>
-            <div class='gubic-sidebar-subtitle'>BoQ Pro v{APP_VERSION}</div>
+        <div class='gubic-sidebar-brand-card'>
+            <div class='gubic-sidebar-logo-box'>{logo_html}</div>
+            <div>
+                <div class='gubic-sidebar-title'>Gubic ONE<br>BoQ Pro</div>
+                <div class='gubic-sidebar-subtitle'>v{APP_VERSION}</div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -334,22 +366,28 @@ def page_header(title: str, subtitle: str | None = None) -> None:
 
 
 def render_insight_panel(insights: list[dict[str, str]]) -> None:
-    """Render executive insight cards with compact status colors."""
+    """Render executive insight cards using Streamlit-native containers.
+
+    The previous single raw-HTML grid could display literal <div> text on
+    Streamlit Cloud when Khmer text, symbols, or sanitizer changes interrupted
+    the HTML block. This version uses native containers and escapes values so
+    the right panel never shows source HTML.
+    """
     if not insights:
         return
-    cards = []
-    for item in insights:
-        status = item.get("status", "info")
-        cards.append(
-            f"""
-            <div class='gubic-insight {status}'>
-                <div class='gubic-insight-title'>{item.get('title', '')}</div>
-                <div class='gubic-insight-value'>{item.get('value', '')}</div>
-                <div class='gubic-insight-comment'>{item.get('comment', '')}</div>
-            </div>
-            """
-        )
-    st.markdown("<div class='gubic-insight-grid'>" + "".join(cards) + "</div>", unsafe_allow_html=True)
+    icons = {"success": "✅", "warning": "⚠️", "danger": "🚨", "info": "ℹ️"}
+    cols = st.columns(2)
+    for idx, item in enumerate(insights):
+        status = str(item.get("status", "info"))
+        title = html.escape(str(item.get("title", "")))
+        value = html.escape(str(item.get("value", "")))
+        comment = html.escape(str(item.get("comment", "")))
+        with cols[idx % 2]:
+            with st.container(border=True):
+                st.markdown(f"<div class='gubic-insight-native-title'>{icons.get(status, 'ℹ️')} {title}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='gubic-insight-native-value'>{value}</div>", unsafe_allow_html=True)
+                if comment:
+                    st.markdown(f"<div class='gubic-insight-comment'>{comment}</div>", unsafe_allow_html=True)
 
 
 def kpi_card(label: str, value: Any) -> None:
