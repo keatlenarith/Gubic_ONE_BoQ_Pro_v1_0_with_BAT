@@ -2,7 +2,7 @@
 from pathlib import Path
 
 APP_NAME = "Gubic ONE BoQ Pro"
-APP_VERSION = "1.0"
+APP_VERSION = "1.1.1"
 BRAND_COLOR = "#1B365D"
 ACCENT_COLOR = "#E8EEF5"
 LIGHT_BG = "#F7F9FC"
@@ -17,6 +17,8 @@ UPLOAD_DIR = DATA_DIR / "uploads"
 EXPORT_DIR = DATA_DIR / "exports"
 SAMPLE_DIR = DATA_DIR / "sample"
 DATABASE_PATH = BASE_DIR / "database" / "boq_database.sqlite"
+LOGO_PATH = BASE_DIR / "assets" / "logo" / "gubic_logo.png"
+FAVICON_PATH = BASE_DIR / "assets" / "logo" / "gubic_favicon.png"
 
 STANDARD_COLUMNS = [
     "project_id", "project_name", "source_file", "source_sheet", "revision",

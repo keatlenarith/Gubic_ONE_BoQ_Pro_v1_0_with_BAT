@@ -13,19 +13,41 @@ from modules.utils import clean_text, make_project_id, normalize_header
 
 
 def _flatten_header(raw: pd.DataFrame, header_row: int) -> list[str]:
-    """Flatten one or two header rows into usable names."""
-    row1 = list(raw.iloc[header_row].fillna(""))
-    row2 = list(raw.iloc[header_row + 1].fillna("")) if header_row + 1 < len(raw) else [""] * len(row1)
-    headers: list[str] = []
-    for a, b in zip(row1, row2):
-        a_text = clean_text(a)
-        b_text = clean_text(b)
-        if b_text and b_text.lower() not in {"unit rate", "amount"}:
-            headers.append(f"{a_text} {b_text}".strip())
-        elif a_text and b_text:
-            headers.append(f"{a_text} {b_text}".strip())
+    """Flatten one or two header rows into usable names.
+
+    v1.1 improves merged/grouped header handling by forward-filling group labels
+    such as Material/Labor before combining them with Unit Rate/Amount subheaders.
+    """
+    row1_raw = [clean_text(v) for v in list(raw.iloc[header_row].fillna(""))]
+    row2_raw = [clean_text(v) for v in (list(raw.iloc[header_row + 1].fillna("")) if header_row + 1 < len(raw) else [""] * len(row1_raw))]
+
+    row1_grouped: list[str] = []
+    last_group = ""
+    for txt in row1_raw:
+        if txt:
+            last_group = txt
+            row1_grouped.append(txt)
         else:
-            headers.append(a_text or b_text)
+            row1_grouped.append(last_group)
+
+    headers: list[str] = []
+    subheader_markers = {"unit rate", "amount", "total", "qty", "quantity", "rate"}
+    for original_a, grouped_a, b in zip(row1_raw, row1_grouped, row2_raw):
+        a = original_a or grouped_a
+        b_low = b.lower().strip()
+        a_low = a.lower().strip()
+        if b and b_low not in {"nan", "none"}:
+            if original_a and b_low not in subheader_markers and b_low not in a_low:
+                header = f"{original_a} {b}".strip()
+            elif grouped_a and b_low in subheader_markers and b_low not in grouped_a.lower():
+                header = f"{grouped_a} {b}".strip()
+            elif not original_a and grouped_a:
+                header = f"{grouped_a} {b}".strip()
+            else:
+                header = original_a or grouped_a or b
+        else:
+            header = original_a or grouped_a or b
+        headers.append(clean_text(header))
     return headers
 
 
@@ -77,9 +99,9 @@ def _generic_column_map(headers: list[str]) -> dict[int, str]:
             mapping[i] = "material_rate"
         elif "material" in context and "amount" in h:
             mapping[i] = "material_cost"
-        elif "labor" in context and "rate" in h:
+        elif ("labor" in context or "labour" in context) and "rate" in h:
             mapping[i] = "labor_rate"
-        elif "labor" in context and "amount" in h:
+        elif ("labor" in context or "labour" in context) and "amount" in h:
             mapping[i] = "labor_cost"
         elif "equipment" in context and "rate" in h:
             mapping[i] = "equipment_rate"
@@ -129,8 +151,36 @@ def _parse_sheet_dataframe(raw: pd.DataFrame, header_row: int, source_sheet: str
     return pd.DataFrame.from_records(records)
 
 
-def parse_boq_workbook(path: str | Path, project_name: str | None = None, project_id: str | None = None) -> tuple[pd.DataFrame, list[dict[str, Any]], dict[str, Any]]:
-    """Parse every usable BoQ-like sheet in a workbook."""
+def select_candidate_profiles(profiles, parse_mode: str = "auto", selected_sheets: list[str] | None = None):
+    """Select workbook sheets for BoQ parsing.
+
+    parse_mode:
+    - auto: prefer final/client-facing sheets that contain "sent" when available.
+    - all_detected: parse every detected BoQ-like sheet except lookup, area, and summary sheets.
+    - selected: parse only sheets chosen by the user.
+    """
+    selected_set = {s.strip() for s in (selected_sheets or []) if str(s).strip()}
+    usable = [p for p in profiles if p.non_empty_cells > 0]
+    if parse_mode == "selected" and selected_set:
+        return [p for p in usable if p.name in selected_set]
+
+    candidates = [p for p in usable if p.sheet_type == "boq" and p.detected_header_row is not None]
+    # Avoid calculation-only sheets unless the user explicitly selects them manually.
+    if parse_mode == "all_detected":
+        candidates = [p for p in candidates if any(key in p.name.lower() for key in ["boq", "bill"])]
+    if parse_mode == "auto":
+        boq_named = [p for p in candidates if any(key in p.name.lower() for key in ["boq", "bill"])]
+        if boq_named:
+            candidates = boq_named
+        sent_profiles = [p for p in candidates if "sent" in p.name.lower()]
+        if sent_profiles:
+            # Prefer final sent/client issue sheets to avoid double-counting working sheets.
+            candidates = sent_profiles
+    return candidates
+
+
+def parse_boq_workbook(path: str | Path, project_name: str | None = None, project_id: str | None = None, parse_mode: str = "auto", selected_sheets: list[str] | None = None) -> tuple[pd.DataFrame, list[dict[str, Any]], dict[str, Any]]:
+    """Parse every usable BoQ-like sheet in a workbook using the selected v1.1 parser mode."""
     path = Path(path)
     meta = extract_metadata(path)
     if project_name:
@@ -141,12 +191,9 @@ def parse_boq_workbook(path: str | Path, project_name: str | None = None, projec
     profiles = inspect_workbook(path)
     parsed_parts: list[pd.DataFrame] = []
     warnings: list[dict[str, Any]] = []
-    candidate_profiles = [p for p in profiles if p.non_empty_cells > 0 and p.sheet_type not in {"lookup", "area", "summary"}]
-    sent_profiles = [p for p in candidate_profiles if "sent" in p.name.lower()]
-    if sent_profiles:
-        # Many construction workbooks keep calculation sheets and final "Sent" BoQ sheets side by side.
-        # Prefer final sent sheets to avoid double-counting the same packages.
-        candidate_profiles = sent_profiles
+    candidate_profiles = select_candidate_profiles(profiles, parse_mode=parse_mode, selected_sheets=selected_sheets)
+    if not candidate_profiles:
+        warnings.append({"sheet": "Workbook", "warning": f"No candidate sheets selected for parse mode: {parse_mode}"})
     for profile in candidate_profiles:
         try:
             raw = read_sheet_raw(path, profile.name)

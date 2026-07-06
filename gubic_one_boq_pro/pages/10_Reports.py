@@ -1,47 +1,49 @@
 from __future__ import annotations
+from config.settings import FAVICON_PATH
 import streamlit as st
 from modules.report_generator import export_detailed_excel, export_pdf_summary, export_word_report
 from modules.cost_engine import answer_predefined_query
+from modules.i18n import t
 from modules.ui_helpers import inject_css, page_header, require_data
 
-st.set_page_config(page_title="Reports - Gubic ONE BoQ Pro", layout="wide")
+st.set_page_config(page_title="Reports - Gubic ONE BoQ Pro", page_icon=str(FAVICON_PATH), layout="wide")
 inject_css()
-page_header("Reports", "Export Excel, Word, and PDF reports, plus predefined AI-ready analytical queries.")
+page_header(t("reports"), t("reports_subtitle"))
 meta, df = require_data()
 if df.empty: st.stop()
-project_name = (meta or {}).get("project_name", "BoQ Project")
+project_name = (meta or {}).get("project_name", t("boq_project"))
 
 cols = st.columns(3)
 with cols[0]:
-    if st.button("Generate Detailed BoQ Excel", type="primary"):
+    if st.button(t("generate_excel"), type="primary"):
         path = export_detailed_excel(df, project_name)
-        st.success(f"Created: {path}")
-        st.download_button("Download Excel", path.read_bytes(), path.name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        st.success(f"{t('created')}: {path}")
+        st.download_button(t("download_excel"), path.read_bytes(), path.name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 with cols[1]:
-    if st.button("Generate Word Summary"):
+    if st.button(t("generate_word")):
         path = export_word_report(df, project_name)
-        st.success(f"Created: {path}")
-        st.download_button("Download Word", path.read_bytes(), path.name, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        st.success(f"{t('created')}: {path}")
+        st.download_button(t("download_word"), path.read_bytes(), path.name, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 with cols[2]:
-    if st.button("Generate PDF Summary"):
+    if st.button(t("generate_pdf")):
         path = export_pdf_summary(df, project_name)
-        st.success(f"Created: {path}")
-        st.download_button("Download PDF", path.read_bytes(), path.name, "application/pdf")
+        st.success(f"{t('created')}: {path}")
+        st.download_button(t("download_pdf"), path.read_bytes(), path.name, "application/pdf")
 
 st.divider()
-st.subheader("AI-ready predefined query buttons")
+st.subheader(t("ai_query_buttons"))
 queries = {
-    "Which package costs the most?": "highest_package",
-    "What is the total material cost?": "total_material",
-    "What are the top 20 expensive BoQ items?": "top20",
-    "What is the cost per square meter?": "cost_per_m2",
-    "Which sheet has the highest cost?": "highest_sheet",
-    "Find all concrete-related items": "concrete",
-    "Find all steel-related items": "steel",
-    "Find all brickwork items": "brickwork",
+    t("query_highest_package"): "highest_package",
+    t("query_total_material"): "total_material",
+    t("query_top20"): "top20",
+    t("query_cost_per_m2"): "cost_per_m2",
+    t("query_highest_sheet"): "highest_sheet",
+    t("query_concrete"): "concrete",
+    t("query_steel"): "steel",
+    t("query_brickwork"): "brickwork",
 }
-choice = st.selectbox("Select query", list(queries.keys()))
-if st.button("Run query"):
+choice = st.selectbox(t("select_query"), list(queries.keys()))
+if st.button(t("run_query")):
     answer, table = answer_predefined_query(df, queries[choice])
     st.success(answer)
     if table is not None:

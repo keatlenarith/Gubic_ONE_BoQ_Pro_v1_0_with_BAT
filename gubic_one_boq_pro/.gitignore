@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local runtime data
+data/uploads/*
+!data/uploads/.gitkeep
+data/exports/*
+!data/exports/.gitkeep
+database/*.sqlite
+
+# Secrets and local settings
+.env
+.env.*
+.streamlit/secrets.toml
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,12 +1,14 @@
 from __future__ import annotations
+from config.settings import FAVICON_PATH
 import pandas as pd
 import streamlit as st
 from modules.boq_cleaner import item_rows
+from modules.i18n import t
 from modules.ui_helpers import inject_css, page_header, require_data, filter_dataframe
 
-st.set_page_config(page_title="Progress Payment - Gubic ONE BoQ Pro", layout="wide")
+st.set_page_config(page_title="Progress Payment - Gubic ONE BoQ Pro", page_icon=str(FAVICON_PATH), layout="wide")
 inject_css()
-page_header("Progress Payment", "Basic IPC-style progress payment calculation for v1.0.")
+page_header(t("progress_payment"), t("progress_payment_subtitle"))
 meta, df = require_data()
 if df.empty: st.stop()
 items = filter_dataframe(item_rows(df, positive_only=True))
@@ -23,6 +25,6 @@ if not edited.empty:
     edited["current_payment"] = edited["contract_amount"] * edited["current_progress_pct"]
     edited["cumulative_payment"] = edited["contract_amount"] * edited["cumulative_progress_pct"]
     edited["remaining_amount"] = edited["contract_amount"] - edited["cumulative_payment"]
-    st.subheader("Payment Calculation")
+    st.subheader(t("payment_calculation"))
     st.dataframe(edited, use_container_width=True)
-    st.download_button("Download payment table CSV", edited.to_csv(index=False).encode("utf-8-sig"), "progress_payment.csv")
+    st.download_button(t("download_payment_csv"), edited.to_csv(index=False).encode("utf-8-sig"), "progress_payment.csv")

@@ -1,6 +1,22 @@
-# Gubic ONE BoQ Pro v1.0
+# Gubic ONE BoQ Pro v1.1
 
 **Gubic ONE BoQ Pro** is a professional Bill of Quantities dashboard, construction cost intelligence, validation, and report export system. It imports complex Excel-based BoQ workbooks, detects usable sheets, cleans and standardizes item rows, calculates cost breakdowns, and creates executive dashboards for project owners, consultants, contractors, and quantity surveyors.
+
+## v1.1 Update Summary
+
+Version **1.1** focuses on smarter **scratching and parsing** of complex BoQ workbooks:
+
+- New **Parser Lab** page for testing sheet detection and column mapping before import
+- New parser modes:
+  - **Auto**: prefer final/client-facing `Sent` BoQ sheets to avoid double-counting
+  - **All detected**: parse all detected BoQ-like sheets
+  - **Manual**: select exact sheets to parse
+- Improved merged/grouped Excel header parsing
+- Better Material / Labor / Labour / Amount / Unit Rate column mapping
+- Parser diagnostics table showing header row, mapped columns, mapping summary, and usable row preview
+- Import QA tabs for row types, construction keyword groups, validation findings, and parser warnings
+- Updated branding to **v1.1** with Gubic logo retained
+- Added `update_github.bat` helper for pushing future edits to GitHub
 
 ## Key Features
 
@@ -32,6 +48,7 @@ gubic_one_boq_pro/
 ├── install_requirements.bat
 ├── run_application.bat
 ├── launch_app.bat
+├── update_github.bat
 ├── config/
 │   └── settings.py
 ├── data/
@@ -45,6 +62,7 @@ gubic_one_boq_pro/
 │   ├── excel_importer.py
 │   ├── boq_cleaner.py
 │   ├── boq_parser.py
+│   ├── parser_diagnostics.py
 │   ├── cost_engine.py
 │   ├── material_engine.py
 │   ├── labor_engine.py
@@ -64,13 +82,13 @@ gubic_one_boq_pro/
 │   ├── 08_Equipment_Analysis.py
 │   ├── 09_Progress_Payment.py
 │   ├── 10_Reports.py
-│   └── 11_Settings.py
+│   ├── 11_Settings.py
+│   └── 12_Parser_Lab.py
 ├── assets/
 │   ├── logo/
 │   └── styles/
 └── tests/
 ```
-
 
 ## Windows One-Click Setup
 
@@ -115,14 +133,19 @@ launch_app.bat
 
 Streamlit normally opens the browser automatically. If it does not, copy the local URL shown in the terminal into your browser.
 
-## How to Import an Excel BoQ
+## How to Import an Excel BoQ in v1.1
 
 1. Open the app.
-2. Go to **Import BoQ**.
-3. Choose **Upload Excel file** or **Use bundled sample workbook**.
-4. Review the workbook sheet inspection table.
-5. Click **Import and standardize workbook**.
-6. Review the KPI summary, warnings, standardized data preview, and validation findings.
+2. Go to **Parser Lab** first if you want to test sheet detection and header mapping.
+3. Go to **Import BoQ**.
+4. Choose **Upload Excel file** or **Use bundled sample workbook**.
+5. Review the workbook sheet inspection table.
+6. Choose a parser mode:
+   - **Auto** for normal use and final Sent sheets
+   - **All detected** when you want to include every detected BoQ-like sheet
+   - **Manual** when you want to control exact sheets
+7. Click **Import and standardize workbook**.
+8. Review KPI summary, row types, keyword QA, validation findings, and warnings.
 
 ## How to View Dashboard
 
@@ -175,9 +198,40 @@ The validation engine checks:
 
 The app includes the uploaded Phoenix Club mock-up BoQ workbook in `data/sample/` for local testing and demonstration.
 
+Smoke test on the bundled sample using **Auto** mode:
+
+```text
+Standardized rows: 1,999
+BoQ item rows: 1,138
+Detected final BoQ sheets: 3
+Total project cost: USD 4,428,368.40
+Detected area: 7,073.11 m²
+Cost per m²: USD 626.09/m²
+```
+
+## GitHub and Streamlit Cloud
+
+For Streamlit Community Cloud, use:
+
+```text
+Repository: your-username/your-repository
+Branch: main
+Main file path: gubic_one_boq_pro/app.py
+```
+
+After editing the app locally, push updates:
+
+```bash
+git add .
+git commit -m "Update Gubic ONE BoQ Pro"
+git push
+```
+
+Or double-click `update_github.bat` from the Git repository root if you copied it there.
+
 ## Future Roadmap
 
-Recommended v1.1+ improvements:
+Recommended v1.2+ improvements:
 
 1. Variation order module
 2. Interim payment certificate workflow
@@ -195,3 +249,28 @@ Recommended v1.1+ improvements:
 - Formula-heavy workbooks may contain broken Excel references such as `#REF!`. The parser treats these as non-numeric and continues instead of crashing.
 - Sheets without recognizable BoQ headers are skipped and reported as warnings.
 - Lookup/material sheets are parsed separately so they do not pollute item-level calculations.
+- Use **Auto** parser mode for client-facing final BoQ issue workbooks to avoid double-counting working/calculation sheets.
+
+## Branding
+
+The app includes the Gubic logo in `assets/logo/gubic_logo.png` and uses it in the sidebar, page headers, and browser tab icon.
+
+
+## v1.1.1 KH/EN Language Setting
+
+Gubic ONE BoQ Pro now includes a sidebar language selector for:
+
+- **EN** — English interface
+- **KH** — Khmer interface
+
+The language selector changes the application interface labels, KPI captions, page headings, chart titles, filters, parser messages, and settings text. Imported BoQ descriptions and Excel workbook data are kept exactly as uploaded and are not translated automatically.
+
+To update Streamlit Cloud after changing files locally:
+
+```bash
+git add .
+git commit -m "Add KH EN language setting"
+git push
+```
+
+Streamlit Cloud will redeploy from the GitHub `main` branch automatically.
