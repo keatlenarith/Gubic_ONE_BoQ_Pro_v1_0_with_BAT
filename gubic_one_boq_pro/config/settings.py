@@ -2,14 +2,18 @@
 from pathlib import Path
 
 APP_NAME = "Gubic ONE BoQ Pro"
+<<<<<<< HEAD
 APP_VERSION = "1.1.1"
+=======
+APP_VERSION = "1.1.2"
+>>>>>>> 3fa6c8a (Set app font to Noto Sans Khmer)
 BRAND_COLOR = "#1B365D"
 ACCENT_COLOR = "#E8EEF5"
 LIGHT_BG = "#F7F9FC"
 TEXT_COLOR = "#172033"
 CURRENCY = "USD"
 CURRENCY_SYMBOL = "$"
-FONT_FAMILY = "Segoe UI, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+FONT_FAMILY = "'Noto Sans Khmer', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"

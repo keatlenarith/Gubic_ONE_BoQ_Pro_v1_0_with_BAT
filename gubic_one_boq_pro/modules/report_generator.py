@@ -48,7 +48,7 @@ def export_word_report(df: pd.DataFrame, project_name: str = "BoQ Project") -> P
         section.right_margin = Inches(0.75)
 
     styles = doc.styles
-    styles["Normal"].font.name = "Segoe UI"
+    styles["Normal"].font.name = "Noto Sans Khmer"
     styles["Normal"].font.size = Pt(10)
 
     title = doc.add_heading("Gubic ONE BoQ Pro - Executive BoQ Summary", level=0)

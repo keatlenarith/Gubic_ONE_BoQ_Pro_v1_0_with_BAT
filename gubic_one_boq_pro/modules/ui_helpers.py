@@ -17,7 +17,14 @@ def inject_css() -> None:
     st.markdown(
         f"""
         <style>
+<<<<<<< HEAD
         html, body, [class*="css"] {{ font-family: {FONT_FAMILY}, 'Noto Sans Khmer', 'Khmer OS Siemreap', 'Khmer OS Battambang', sans-serif; }}
+=======
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700;800;900&display=swap');
+        html, body, [class*="css"], .stApp, .stMarkdown, .stText, .stButton button, .stSelectbox, .stMultiSelect, .stTextInput, .stNumberInput, .stDataFrame, .stMetric, input, textarea, select {{
+            font-family: {FONT_FAMILY} !important;
+        }}
+>>>>>>> 3fa6c8a (Set app font to Noto Sans Khmer)
         .block-container {{ padding-top: 1.2rem; }}
         .stButton>button {{ border-radius: 10px; border: 1px solid {BRAND_COLOR}; }}
         .gubic-kpi {{ background: white; border: 1px solid #E6ECF2; border-radius: 16px; padding: 16px; min-height: 88px; }}
