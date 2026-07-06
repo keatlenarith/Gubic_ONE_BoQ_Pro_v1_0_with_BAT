@@ -1,0 +1,197 @@
+# Gubic ONE BoQ Pro v1.0
+
+**Gubic ONE BoQ Pro** is a professional Bill of Quantities dashboard, construction cost intelligence, validation, and report export system. It imports complex Excel-based BoQ workbooks, detects usable sheets, cleans and standardizes item rows, calculates cost breakdowns, and creates executive dashboards for project owners, consultants, contractors, and quantity surveyors.
+
+## Key Features
+
+- Excel `.xlsx` BoQ import
+- Automatic workbook and sheet inspection
+- Flexible BoQ table detection
+- Item-level data cleaning and standardization
+- Section/package context detection
+- USD cost calculations
+- Material, labor, equipment, transport, and risk cost analysis
+- Cost per square meter calculation
+- Top expensive item ranking
+- Package/sheet cost ranking
+- Pareto 80/20 chart
+- Searchable BoQ database
+- Validation report for missing quantity/rate, amount mismatch, duplicate codes, negative values, and outliers
+- Basic progress payment module
+- Excel, Word, and PDF export
+- SQLite local project database
+- Predefined AI-ready query buttons
+
+## Folder Structure
+
+```text
+gubic_one_boq_pro/
+├── app.py
+├── requirements.txt
+├── README.md
+├── install_requirements.bat
+├── run_application.bat
+├── launch_app.bat
+├── config/
+│   └── settings.py
+├── data/
+│   ├── sample/
+│   ├── uploads/
+│   └── exports/
+├── database/
+│   ├── boq_database.sqlite
+│   └── db_manager.py
+├── modules/
+│   ├── excel_importer.py
+│   ├── boq_cleaner.py
+│   ├── boq_parser.py
+│   ├── cost_engine.py
+│   ├── material_engine.py
+│   ├── labor_engine.py
+│   ├── equipment_engine.py
+│   ├── dashboard_engine.py
+│   ├── report_generator.py
+│   ├── ui_helpers.py
+│   └── utils.py
+├── pages/
+│   ├── 01_Dashboard.py
+│   ├── 02_Project_Setup.py
+│   ├── 03_Import_BoQ.py
+│   ├── 04_BoQ_Database.py
+│   ├── 05_Cost_Breakdown.py
+│   ├── 06_Material_Analysis.py
+│   ├── 07_Labor_Analysis.py
+│   ├── 08_Equipment_Analysis.py
+│   ├── 09_Progress_Payment.py
+│   ├── 10_Reports.py
+│   └── 11_Settings.py
+├── assets/
+│   ├── logo/
+│   └── styles/
+└── tests/
+```
+
+
+## Windows One-Click Setup
+
+For Windows users, the easiest setup is:
+
+1. Extract the ZIP file.
+2. Open the `gubic_one_boq_pro` folder.
+3. Double-click `install_requirements.bat`.
+4. After installation finishes, double-click `run_application.bat`.
+5. The app opens at `http://localhost:8501`.
+
+`install_requirements.bat` creates a local `.venv` environment and installs all required Python packages.
+
+`run_application.bat` starts the Streamlit dashboard using the local `.venv` when available.
+
+## Installation
+
+Create and activate a virtual environment:
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Run the App
+
+```bash
+streamlit run app.py
+```
+
+Or on Windows, double-click:
+
+```text
+launch_app.bat
+```
+
+Streamlit normally opens the browser automatically. If it does not, copy the local URL shown in the terminal into your browser.
+
+## How to Import an Excel BoQ
+
+1. Open the app.
+2. Go to **Import BoQ**.
+3. Choose **Upload Excel file** or **Use bundled sample workbook**.
+4. Review the workbook sheet inspection table.
+5. Click **Import and standardize workbook**.
+6. Review the KPI summary, warnings, standardized data preview, and validation findings.
+
+## How to View Dashboard
+
+After import, go to:
+
+- **Dashboard** for executive KPIs and charts
+- **Cost Breakdown** for package and section ranking
+- **Material Analysis** for material-heavy items
+- **Labor Analysis** for labor-heavy items
+- **Equipment Analysis** for equipment or plant-heavy items
+- **BoQ Database** for filtering and searching standardized BoQ rows
+
+## How to Export Reports
+
+Go to **Reports** and select:
+
+- **Generate Detailed BoQ Excel**
+- **Generate Word Summary**
+- **Generate PDF Summary**
+
+The exports are saved to `data/exports/` and can also be downloaded from the Streamlit page.
+
+## Standard BoQ Data Model
+
+The parser standardizes imported BoQ rows into these fields:
+
+```text
+project_id, project_name, source_file, source_sheet, revision, package_name,
+section_name, subsection_name, item_code, item_description, brand, unit,
+quantity, rate, amount, material_rate, material_cost, labor_rate, labor_cost,
+equipment_rate, equipment_cost, transport_rate, transport_cost, risk_cost,
+direct_cost, indirect_cost, total_cost, currency, area_m2, cost_per_m2,
+remarks, row_type, created_at, updated_at
+```
+
+## Validation Checks
+
+The validation engine checks:
+
+- Missing quantity
+- Missing rate
+- Amount mismatch where amount does not equal quantity × rate
+- Negative values
+- Duplicate item codes per sheet
+- Empty descriptions
+- Extremely high unit rates
+- Extremely high quantities
+
+## Tested Reference Workbook
+
+The app includes the uploaded Phoenix Club mock-up BoQ workbook in `data/sample/` for local testing and demonstration.
+
+## Future Roadmap
+
+Recommended v1.1+ improvements:
+
+1. Variation order module
+2. Interim payment certificate workflow
+3. Multi-currency and exchange-rate settings
+4. Tax/VAT/withholding layer
+5. User-defined BoQ coding standards
+6. Construction procurement list generator
+7. Client/consultant/contractor approval workflow
+8. FastAPI backend and React/Electron desktop interface
+9. AI assistant query layer over the standardized BoQ database
+10. Cloud project database with role-based access control
+
+## Notes
+
+- Formula-heavy workbooks may contain broken Excel references such as `#REF!`. The parser treats these as non-numeric and continues instead of crashing.
+- Sheets without recognizable BoQ headers are skipped and reported as warnings.
+- Lookup/material sheets are parsed separately so they do not pollute item-level calculations.

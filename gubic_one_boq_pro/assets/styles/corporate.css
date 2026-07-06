@@ -1,0 +1,35 @@
+:root {
+  --gubic-navy: #1B365D;
+  --gubic-accent: #E8EEF5;
+  --gubic-bg: #F7F9FC;
+  --gubic-text: #172033;
+}
+html, body, [class*="css"] {
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.gubic-title {
+  color: var(--gubic-navy);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.metric-card {
+  background: white;
+  border: 1px solid #E6ECF2;
+  border-radius: 16px;
+  padding: 18px 18px 14px 18px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+.metric-card .label {
+  font-size: 0.82rem;
+  color: #607087;
+  margin-bottom: 6px;
+}
+.metric-card .value {
+  color: var(--gubic-navy);
+  font-size: 1.55rem;
+  font-weight: 800;
+}
+.section-caption {
+  color: #607087;
+  font-size: 0.95rem;
+}
