@@ -5,8 +5,17 @@
   --gubic-bg: #F7F9FC;
   --gubic-text: #172033;
 }
-html, body, [class*="css"] {
-  font-family: "Noto Sans Khmer", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+html, body, .stApp, .main, .block-container,
+h1, h2, h3, h4, h5, h6, p, div, span, label, section, article,
+button, input, textarea, select, option, table, thead, tbody, tr, th, td,
+[class^="st-"], [class*=" st-"], [class*="css"], [data-testid],
+svg text, .plotly text, .js-plotly-plot text {
+  font-family: "Noto Sans Khmer", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+[data-testid="stSidebarNav"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
 }
 .gubic-title {
   color: var(--gubic-navy);
