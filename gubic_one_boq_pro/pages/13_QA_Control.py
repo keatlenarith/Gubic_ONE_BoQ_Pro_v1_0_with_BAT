@@ -6,7 +6,7 @@ from config.settings import FAVICON_PATH
 from modules.cost_engine import validation_report
 from modules.i18n import t
 from modules.insight_engine import qa_check_summary, qa_score, risk_watchlist
-from modules.ui_helpers import inject_css, page_header, require_data, filter_dataframe, kpi_card, download_dataframe_button
+from modules.ui_helpers import inject_css, page_header, require_data, filter_dataframe, kpi_card, download_dataframe_button, fit_dataframe
 
 st.set_page_config(page_title="QA Control - Gubic ONE BoQ Pro", page_icon=str(FAVICON_PATH), layout="wide")
 inject_css()
@@ -31,18 +31,18 @@ watchlist = risk_watchlist(filtered, 30)
 tabs = st.tabs([t("qa_summary"), t("validation_findings"), t("risk_watchlist"), t("download_csv")])
 with tabs[0]:
     st.subheader(t("qa_summary"))
-    st.dataframe(summary, use_container_width=True)
+    fit_dataframe(summary, use_container_width=True)
     st.info(t("qa_workflow_note"))
 with tabs[1]:
     st.subheader(t("validation_findings"))
     if validations.empty:
         st.success(t("qa_no_issues_action"))
     else:
-        st.dataframe(validations, use_container_width=True, height=560)
+        fit_dataframe(validations, use_container_width=True, height=560)
 with tabs[2]:
     st.subheader(t("risk_watchlist"))
     st.caption(t("risk_watchlist_note"))
-    st.dataframe(watchlist, use_container_width=True, height=560)
+    fit_dataframe(watchlist, use_container_width=True, height=560)
 with tabs[3]:
     st.subheader(t("download_csv"))
     download_dataframe_button(summary, "qa_check_summary.csv", t("download_qa_summary"))

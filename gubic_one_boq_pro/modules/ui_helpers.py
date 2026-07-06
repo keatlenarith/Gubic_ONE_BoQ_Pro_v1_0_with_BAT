@@ -153,16 +153,31 @@ def inject_css() -> None:
             line-height: 1.55 !important;
         }}
 
-        /* Dataframes and table headers need more vertical room for Khmer glyphs. */
-        [data-testid="stDataFrame"], .stDataFrame {{
-            overflow: visible !important;
+        /* v1.3.2 grid patch: keep dataframe/editor compact and prevent hidden
+           column-menu accessibility text from appearing over the table. */
+        [data-testid="stDataFrame"],
+        [data-testid="stDataEditor"],
+        .stDataFrame, .stDataEditor {{
+            overflow: hidden !important;
+            font-size: .78rem !important;
         }}
-        [data-testid="stDataFrame"] div,
-        [data-testid="stDataFrame"] span,
-        [data-testid="stDataFrame"] p,
-        [data-testid="stDataEditor"] div,
-        [data-testid="stDataEditor"] span {{
-            line-height: 1.55 !important;
+        [data-testid="stDataFrame"] *,
+        [data-testid="stDataEditor"] * {{
+            font-family: {FONT_FAMILY} !important;
+            font-size: .78rem !important;
+            line-height: 1.34 !important;
+        }}
+        [data-testid="stDataFrame"] [role="dialog"],
+        [data-testid="stDataEditor"] [role="dialog"],
+        [data-testid="stDataFrame"] [role="menu"],
+        [data-testid="stDataEditor"] [role="menu"] {{
+            overflow: hidden !important;
+            max-width: 260px !important;
+            white-space: nowrap !important;
+        }}
+        [data-testid="stDataFrame"] canvas,
+        [data-testid="stDataEditor"] canvas {{
+            font-family: {FONT_FAMILY} !important;
         }}
 
         .block-container {{ padding-top: 1.2rem; }}
@@ -495,6 +510,117 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             out = out[out["item_description"].astype(str).str.contains(keyword, case=False, na=False)]
     return out
 
+
+
+def _humanize_column_name(name: str) -> str:
+    """Return a compact, readable label for dataframe/editor columns."""
+    label = str(name).replace("_", " ").strip().title()
+    replacements = {
+        "Id": "ID",
+        "Boq": "BoQ",
+        "M2": "m²",
+        "Qa": "QA",
+        "Usd": "USD",
+    }
+    for old, new in replacements.items():
+        label = label.replace(old, new)
+    return label
+
+
+def _grid_width_for_column(name: str) -> str:
+    """Choose compact widths so most BoQ columns fit without overlap."""
+    n = str(name).lower()
+    if any(key in n for key in ["description", "remarks", "comment", "issue", "finding"]):
+        return "large"
+    if any(key in n for key in ["source_sheet", "package", "section", "subsection", "project_name", "source_file"]):
+        return "medium"
+    if any(key in n for key in ["cost", "amount", "rate", "quantity", "qty", "area", "percent", "score", "total"]):
+        return "small"
+    if any(key in n for key in ["code", "unit", "brand", "row_type", "currency", "edit_id", "id"]):
+        return "small"
+    return "medium"
+
+
+def grid_column_config(df: pd.DataFrame, overrides: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Build Streamlit column_config with compact widths and correct numeric formats.
+
+    This fixes the wide/overlapping column-menu issue by reducing grid text size,
+    using consistent column widths, and avoiding the browser trying to stretch long
+    headers like material_cost, total_cost, section_name, etc.
+    """
+    config: dict[str, Any] = {}
+    if df is None or df.empty:
+        return overrides or config
+    for col in df.columns:
+        label = _humanize_column_name(col)
+        width = _grid_width_for_column(col)
+        series = df[col]
+        lower = str(col).lower()
+        is_numeric = pd.api.types.is_numeric_dtype(series)
+        if is_numeric:
+            if any(key in lower for key in ["cost", "amount", "rate", "price", "total"]):
+                config[col] = st.column_config.NumberColumn(label, width=width, format="$%.2f")
+            elif any(key in lower for key in ["percent", "percentage"]):
+                config[col] = st.column_config.NumberColumn(label, width=width, format="%.2f%%")
+            else:
+                config[col] = st.column_config.NumberColumn(label, width=width, format="%.4g")
+        else:
+            config[col] = st.column_config.TextColumn(label, width=width)
+    if overrides:
+        config.update(overrides)
+    return config
+
+
+def fit_dataframe(
+    df: pd.DataFrame,
+    *,
+    height: int | None = None,
+    column_config: dict[str, Any] | None = None,
+    hide_index: bool = True,
+    **kwargs: Any,
+) -> None:
+    """Render a compact dataframe with safe widths and small readable text."""
+    if height is None:
+        try:
+            height = min(650, max(260, int(len(df) * 30 + 44)))
+        except Exception:
+            height = 420
+    kwargs.pop("use_container_width", None)
+    kwargs.pop("hide_index", None)
+    st.dataframe(
+        df,
+        use_container_width=True,
+        height=height,
+        hide_index=hide_index,
+        column_config=grid_column_config(df, column_config),
+        **kwargs,
+    )
+
+
+def fit_data_editor(
+    df: pd.DataFrame,
+    *,
+    height: int | None = None,
+    column_config: dict[str, Any] | None = None,
+    hide_index: bool = True,
+    **kwargs: Any,
+) -> pd.DataFrame:
+    """Render a compact editable grid with safe widths and no text overlap."""
+    if height is None:
+        try:
+            height = min(660, max(320, int(len(df) * 30 + 60)))
+        except Exception:
+            height = 520
+    kwargs.pop("use_container_width", None)
+    kwargs.pop("hide_index", None)
+    return st.data_editor(
+        df,
+        use_container_width=True,
+        height=height,
+        hide_index=hide_index,
+        column_config=grid_column_config(df, column_config),
+        **kwargs,
+    )
 
 def download_dataframe_button(df: pd.DataFrame, filename: str, label: str | None = None) -> None:
     st.download_button(label or t("download_csv"), df.to_csv(index=False).encode("utf-8-sig"), filename, "text/csv")

@@ -1,4 +1,4 @@
-"""Editable BoQ workspace helpers for Gubic ONE BoQ Pro v1.3.1.
+"""Editable BoQ workspace helpers for Gubic ONE BoQ Pro v1.3.2.
 
 The editor is intentionally session-first so it works on Streamlit Community
 Cloud without requiring a persistent external database. Users can apply edits to

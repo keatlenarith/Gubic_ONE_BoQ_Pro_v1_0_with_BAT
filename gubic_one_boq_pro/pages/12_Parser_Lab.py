@@ -7,7 +7,7 @@ from config.settings import FAVICON_PATH, SAMPLE_DIR, UPLOAD_DIR
 from modules.excel_importer import inspect_workbook
 from modules.i18n import t
 from modules.parser_diagnostics import workbook_diagnostics
-from modules.ui_helpers import inject_css, page_header
+from modules.ui_helpers import inject_css, page_header, fit_dataframe
 from modules.utils import write_uploaded_file
 
 st.set_page_config(page_title="Parser Lab - Gubic ONE BoQ Pro", page_icon=str(FAVICON_PATH), layout="wide")
@@ -33,7 +33,7 @@ if path:
     profiles = inspect_workbook(path)
     profile_df = pd.DataFrame([p.__dict__ for p in profiles])
     st.subheader(t("workbook_sheet_profile"))
-    st.dataframe(profile_df, use_container_width=True)
+    fit_dataframe(profile_df, use_container_width=True)
 
     names = [p.name for p in profiles if p.non_empty_cells > 0]
     default = [p.name for p in profiles if "sent" in p.name.lower() and p.sheet_type == "boq"] or names[:3]
@@ -42,7 +42,7 @@ if path:
         with st.spinner(t("reading_mapping_spinner")):
             diag = workbook_diagnostics(path, selected_sheets=selected)
         st.subheader(t("parser_mapping_diagnostics"))
-        st.dataframe(diag, use_container_width=True)
+        fit_dataframe(diag, use_container_width=True)
         st.markdown(
             f"""
             **{t('how_to_use_parser_lab')}** {t('parser_lab_help')}

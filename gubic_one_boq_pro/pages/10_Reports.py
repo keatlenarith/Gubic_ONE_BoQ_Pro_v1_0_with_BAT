@@ -4,7 +4,7 @@ import streamlit as st
 from modules.report_generator import export_detailed_excel, export_pdf_summary, export_word_report
 from modules.cost_engine import answer_predefined_query
 from modules.i18n import t
-from modules.ui_helpers import inject_css, page_header, require_data
+from modules.ui_helpers import inject_css, page_header, require_data, fit_dataframe
 
 st.set_page_config(page_title="Reports - Gubic ONE BoQ Pro", page_icon=str(FAVICON_PATH), layout="wide")
 inject_css()
@@ -47,4 +47,4 @@ if st.button(t("run_query")):
     answer, table = answer_predefined_query(df, queries[choice])
     st.success(answer)
     if table is not None:
-        st.dataframe(table, use_container_width=True)
+        fit_dataframe(table, use_container_width=True)

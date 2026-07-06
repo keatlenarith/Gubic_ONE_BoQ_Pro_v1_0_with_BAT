@@ -1,4 +1,4 @@
-# Gubic ONE BoQ Pro v1.3.1
+# Gubic ONE BoQ Pro v1.3.2
 
 **Gubic ONE BoQ Pro** is a professional Bill of Quantities dashboard, construction cost intelligence, validation, and report export system. It imports complex Excel-based BoQ workbooks, detects usable sheets, cleans and standardizes item rows, calculates cost breakdowns, and creates executive dashboards for project owners, consultants, contractors, and quantity surveyors.
 
@@ -301,7 +301,7 @@ Streamlit Cloud will redeploy from the GitHub `main` branch automatically.
 - Retains KH/EN interface, Gubic logo, Noto Sans Khmer font, Parser Lab, and BoQ export tools.
 
 
-## v1.3.1 Editable BoQ Manager
+## v1.3.2 Editable BoQ Manager
 
 This version adds a new **Editable BoQ Manager** page. Users can edit BoQ item descriptions, units, quantities, rates, amounts, material/labor/equipment/transport/risk cost splits, and remarks. The page supports add/delete rows, automatic Quantity × Rate recalculation, change log audit, validation review, save-to-dashboard, save-to-local-database, and Excel export of the revised BoQ.
 

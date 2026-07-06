@@ -17,7 +17,7 @@ from modules.edit_engine import (
     recalculate_edited_rows,
 )
 from modules.i18n import t
-from modules.ui_helpers import inject_css, page_header, require_data, kpi_card, download_dataframe_button
+from modules.ui_helpers import inject_css, page_header, require_data, kpi_card, download_dataframe_button, fit_dataframe, fit_data_editor
 
 st.set_page_config(page_title="Editable BoQ Manager - Gubic ONE BoQ Pro", page_icon=str(FAVICON_PATH), layout="wide")
 inject_css()
@@ -93,7 +93,7 @@ column_config = {
     "remarks": st.column_config.TextColumn(t("remarks"), width="medium"),
 }
 
-edited_visible = st.data_editor(
+edited_visible = fit_data_editor(
     visible_before,
     use_container_width=True,
     height=620,
@@ -150,14 +150,14 @@ with tab1:
     if change_log.empty:
         st.info(t("no_changes_detected"))
     else:
-        st.dataframe(change_log, use_container_width=True, height=360)
+        fit_dataframe(change_log, use_container_width=True, height=360)
         download_dataframe_button(change_log, "boq_edit_change_log.csv", t("download_change_log"))
 with tab2:
     qa = validation_report(st.session_state["editable_workspace_items"])
     if qa.empty:
         st.success(t("qa_no_issues"))
     else:
-        st.dataframe(qa, use_container_width=True, height=360)
+        fit_dataframe(qa, use_container_width=True, height=360)
         download_dataframe_button(qa, "edited_boq_validation.csv", t("download_validation_findings"))
 with tab3:
     edited_master_for_export = merge_edits_to_master(master_df, st.session_state["editable_workspace_items"], recalc_amount=recalc_amount)
@@ -165,8 +165,8 @@ with tab3:
     st.download_button(
         t("download_edited_boq_excel"),
         data=excel_bytes,
-        file_name="Gubic_ONE_Edited_BoQ_v1_3_1.xlsx",
+        file_name="Gubic_ONE_Edited_BoQ_v1_3_2.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True,
     )
-    st.dataframe(edited_master_for_export[[c for c in STANDARD_COLUMNS if c in edited_master_for_export.columns]].head(100), use_container_width=True, height=320)
+    fit_dataframe(edited_master_for_export[[c for c in STANDARD_COLUMNS if c in edited_master_for_export.columns]].head(100), use_container_width=True, height=320)

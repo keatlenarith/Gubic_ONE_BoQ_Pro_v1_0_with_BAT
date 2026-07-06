@@ -10,7 +10,7 @@ from modules.cost_engine import calculate_kpis, validation_report
 from modules.excel_importer import inspect_workbook
 from modules.i18n import t
 from modules.parser_diagnostics import workbook_diagnostics, row_type_summary, description_keyword_summary
-from modules.ui_helpers import inject_css, page_header, kpi_card
+from modules.ui_helpers import inject_css, page_header, kpi_card, fit_dataframe
 from modules.utils import write_uploaded_file
 
 st.set_page_config(page_title="Import BoQ - Gubic ONE BoQ Pro", page_icon=str(FAVICON_PATH), layout="wide")
@@ -39,7 +39,7 @@ if path:
     profiles_df = pd.DataFrame([p.__dict__ for p in profiles])
 
     with st.expander(t("sheet_inspection"), expanded=True):
-        st.dataframe(profiles_df, use_container_width=True)
+        fit_dataframe(profiles_df, use_container_width=True)
 
     st.subheader(t("parser_mode"))
     auto_label = t("auto_sent")
@@ -66,7 +66,7 @@ if path:
     with st.expander(t("parser_diagnostics"), expanded=False):
         if st.button(t("run_parser_diagnostics")):
             diag = workbook_diagnostics(path, selected_sheets=selected_sheets)
-            st.dataframe(diag, use_container_width=True)
+            fit_dataframe(diag, use_container_width=True)
             st.caption(t("mapped_columns_caption"))
 
     if st.button(t("import_standardize"), type="primary"):
@@ -102,20 +102,20 @@ if path:
             tabs = st.tabs([t("preview"), t("row_types"), t("keyword_qa"), t("validation"), t("warnings")])
             with tabs[0]:
                 st.subheader(t("preview_standardized"))
-                st.dataframe(df.head(300), use_container_width=True)
+                fit_dataframe(df.head(300), use_container_width=True)
             with tabs[1]:
                 st.subheader(t("row_type_summary"))
-                st.dataframe(row_type_summary(df), use_container_width=True)
+                fit_dataframe(row_type_summary(df), use_container_width=True)
             with tabs[2]:
                 st.subheader(t("construction_keyword_summary"))
-                st.dataframe(description_keyword_summary(df), use_container_width=True)
+                fit_dataframe(description_keyword_summary(df), use_container_width=True)
             with tabs[3]:
                 st.subheader(t("validation_findings"))
                 val = validation_report(df)
-                st.dataframe(val.head(500), use_container_width=True)
+                fit_dataframe(val.head(500), use_container_width=True)
             with tabs[4]:
                 if warnings:
                     st.warning(t("parser_warnings"))
-                    st.dataframe(pd.DataFrame(warnings), use_container_width=True)
+                    fit_dataframe(pd.DataFrame(warnings), use_container_width=True)
                 else:
                     st.success(t("no_parser_warnings"))

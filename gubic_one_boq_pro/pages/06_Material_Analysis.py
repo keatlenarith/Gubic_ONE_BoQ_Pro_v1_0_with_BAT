@@ -4,7 +4,7 @@ import plotly.express as px
 import streamlit as st
 from modules.material_engine import material_summary, material_by_package
 from modules.i18n import t
-from modules.ui_helpers import inject_css, page_header, require_data, filter_dataframe, kpi_card
+from modules.ui_helpers import inject_css, page_header, require_data, filter_dataframe, kpi_card, fit_dataframe
 
 st.set_page_config(page_title="Material Analysis - Gubic ONE BoQ Pro", page_icon=str(FAVICON_PATH), layout="wide")
 inject_css()
@@ -23,4 +23,4 @@ if not package.empty:
 if not mat.empty:
     top = mat.head(30).copy(); top["label"] = top["item_description"].astype(str).str.slice(0,80)
     st.plotly_chart(px.bar(top, x="material_cost", y="label", orientation="h", title=t("top_material_items")), use_container_width=True)
-st.dataframe(mat, use_container_width=True)
+fit_dataframe(mat, use_container_width=True)
