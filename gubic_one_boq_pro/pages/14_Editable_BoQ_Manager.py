@@ -74,32 +74,32 @@ st.subheader(t("editable_table"))
 st.caption(t("editable_table_note"))
 
 column_config = {
-    "edit_id": st.column_config.TextColumn("ID", disabled=True, width="small"),
-    "source_sheet": st.column_config.TextColumn(t("sheet_package"), width="medium"),
-    "section_name": st.column_config.TextColumn(t("section"), width="medium"),
-    "subsection_name": st.column_config.TextColumn(t("subsection"), width="medium"),
-    "item_code": st.column_config.TextColumn(t("item_code"), width="small"),
-    "item_description": st.column_config.TextColumn(t("description"), width="large"),
-    "brand": st.column_config.TextColumn(t("brand"), width="small"),
-    "unit": st.column_config.TextColumn(t("unit"), width="small"),
-    "quantity": st.column_config.NumberColumn(t("quantity"), format="%.4f"),
-    "rate": st.column_config.NumberColumn(t("rate"), format="$%.2f"),
-    "amount": st.column_config.NumberColumn(t("amount"), format="$%.2f"),
-    "material_cost": st.column_config.NumberColumn(t("material_cost"), format="$%.2f"),
-    "labor_cost": st.column_config.NumberColumn(t("labor_cost"), format="$%.2f"),
-    "equipment_cost": st.column_config.NumberColumn(t("equipment_cost"), format="$%.2f"),
-    "transport_cost": st.column_config.NumberColumn(t("transport_cost"), format="$%.2f"),
-    "risk_cost": st.column_config.NumberColumn(t("risk_contingency"), format="$%.2f"),
-    "remarks": st.column_config.TextColumn(t("remarks"), width="medium"),
+    "edit_id": st.column_config.TextColumn("ID", width="small"),
+    "source_sheet": st.column_config.TextColumn("Sheet", width="medium"),
+    "section_name": st.column_config.TextColumn("Section", width="medium"),
+    "subsection_name": st.column_config.TextColumn("Sub", width="medium"),
+    "item_code": st.column_config.TextColumn("Code", width="small"),
+    "item_description": st.column_config.TextColumn("Description", width="large"),
+    "brand": st.column_config.TextColumn("Brand", width="small"),
+    "unit": st.column_config.TextColumn("Unit", width="small"),
+    "quantity": st.column_config.NumberColumn("Qty", width="small", format="%.4g"),
+    "rate": st.column_config.NumberColumn("Rate", width="small", format="$%.2f"),
+    "amount": st.column_config.NumberColumn("Amount", width="small", format="$%.2f"),
+    "material_cost": st.column_config.NumberColumn("Material", width="small", format="$%.2f"),
+    "labor_cost": st.column_config.NumberColumn("Labor", width="small", format="$%.2f"),
+    "equipment_cost": st.column_config.NumberColumn("Equip", width="small", format="$%.2f"),
+    "transport_cost": st.column_config.NumberColumn("Trans", width="small", format="$%.2f"),
+    "risk_cost": st.column_config.NumberColumn("Risk", width="small", format="$%.2f"),
+    "remarks": st.column_config.TextColumn("Remarks", width="large"),
 }
 
 edited_visible = fit_data_editor(
     visible_before,
-    use_container_width=True,
     height=620,
     num_rows="dynamic",
     column_config=column_config,
     hide_index=True,
+    disabled=["edit_id"],
     key="editable_boq_editor",
 )
 
@@ -165,7 +165,7 @@ with tab3:
     st.download_button(
         t("download_edited_boq_excel"),
         data=excel_bytes,
-        file_name="Gubic_ONE_Edited_BoQ_v1_3_2.xlsx",
+        file_name="Gubic_ONE_Edited_BoQ_v1_3_4.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True,
     )

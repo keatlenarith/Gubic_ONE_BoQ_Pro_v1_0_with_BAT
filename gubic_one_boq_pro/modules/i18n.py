@@ -530,6 +530,7 @@ TRANSLATIONS["EN"].update({
     "download_change_log": "Download change log CSV",
     "exports": "Exports",
     "download_edited_boq_excel": "Download Edited BoQ Excel",
+    "editor_grid_fallback": "The editable grid could not load safely on Streamlit Cloud. A read-only preview is shown instead; please refresh or narrow filters and try again.",
 })
 
 TRANSLATIONS["KH"].update({
@@ -567,4 +568,5 @@ TRANSLATIONS["KH"].update({
     "download_change_log": "ទាញយក Change Log CSV",
     "exports": "នាំចេញ",
     "download_edited_boq_excel": "ទាញយក Edited BoQ Excel",
+    "editor_grid_fallback": "តារាងកែសម្រួលមិនអាចបង្ហាញបានដោយសុវត្ថិភាពលើ Streamlit Cloud។ កំពុងបង្ហាញ Preview មិនអាចកែបាន។ សូម Refresh ឬកាត់បន្ថយ Filter ហើយសាកល្បងម្ដងទៀត។",
 })

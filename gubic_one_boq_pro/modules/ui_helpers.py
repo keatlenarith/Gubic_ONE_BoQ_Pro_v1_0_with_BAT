@@ -153,30 +153,26 @@ def inject_css() -> None:
             line-height: 1.55 !important;
         }}
 
-        /* v1.3.2 grid patch: keep dataframe/editor compact and prevent hidden
-           column-menu accessibility text from appearing over the table. */
+        /* v1.3.4 compact grid patch: use Streamlit-safe sizing and avoid
+           overriding the internal column-menu layout. */
         [data-testid="stDataFrame"],
         [data-testid="stDataEditor"],
         .stDataFrame, .stDataEditor {{
-            overflow: hidden !important;
-            font-size: .78rem !important;
-        }}
-        [data-testid="stDataFrame"] *,
-        [data-testid="stDataEditor"] * {{
-            font-family: {FONT_FAMILY} !important;
-            font-size: .78rem !important;
-            line-height: 1.34 !important;
-        }}
-        [data-testid="stDataFrame"] [role="dialog"],
-        [data-testid="stDataEditor"] [role="dialog"],
-        [data-testid="stDataFrame"] [role="menu"],
-        [data-testid="stDataEditor"] [role="menu"] {{
-            overflow: hidden !important;
-            max-width: 260px !important;
-            white-space: nowrap !important;
+            font-size: .72rem !important;
         }}
         [data-testid="stDataFrame"] canvas,
         [data-testid="stDataEditor"] canvas {{
+            font-family: {FONT_FAMILY} !important;
+        }}
+        [data-testid="stDataFrame"] [role="gridcell"],
+        [data-testid="stDataEditor"] [role="gridcell"],
+        [data-testid="stDataFrame"] [role="columnheader"],
+        [data-testid="stDataEditor"] [role="columnheader"] {{
+            font-size: .72rem !important;
+            line-height: 1.25 !important;
+        }}
+        [data-baseweb="popover"],
+        [data-baseweb="popover"] * {{
             font-family: {FONT_FAMILY} !important;
         }}
 
@@ -512,6 +508,132 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 
 
+
+GRID_SHORT_LABELS = {
+    "edit_id": "ID",
+    "project_id": "Project ID",
+    "project_name": "Project",
+    "source_file": "File",
+    "source_sheet": "Sheet",
+    "package_name": "Package",
+    "section_name": "Section",
+    "subsection_name": "Sub",
+    "item_code": "Code",
+    "item_description": "Description",
+    "brand": "Brand",
+    "unit": "Unit",
+    "quantity": "Qty",
+    "rate": "Rate",
+    "amount": "Amount",
+    "material_rate": "Mat Rate",
+    "material_cost": "Material",
+    "labor_rate": "Lab Rate",
+    "labor_cost": "Labor",
+    "equipment_rate": "Eq Rate",
+    "equipment_cost": "Equip",
+    "transport_rate": "Trans Rate",
+    "transport_cost": "Transport",
+    "risk_cost": "Risk",
+    "direct_cost": "Direct",
+    "indirect_cost": "Indirect",
+    "total_cost": "Total",
+    "area_m2": "Area m²",
+    "cost_per_m2": "$/m²",
+    "remarks": "Remarks",
+    "row_type": "Type",
+    "created_at": "Created",
+    "updated_at": "Updated",
+}
+
+GRID_NUMERIC_COLUMNS = {
+    "quantity", "rate", "amount", "material_rate", "material_cost", "labor_rate",
+    "labor_cost", "equipment_rate", "equipment_cost", "transport_rate",
+    "transport_cost", "risk_cost", "direct_cost", "indirect_cost", "total_cost",
+    "area_m2", "cost_per_m2",
+}
+
+GRID_TEXT_COMPACT_LIMITS = {
+    "item_description": 105,
+    "section_name": 72,
+    "subsection_name": 62,
+    "remarks": 90,
+    "source_file": 44,
+    "source_sheet": 34,
+    "project_name": 48,
+}
+
+
+def safe_grid_dataframe(df: pd.DataFrame | None, *, editable: bool = False, compact_text: bool = False) -> pd.DataFrame:
+    """Return a Streamlit grid-safe dataframe.
+
+    The function keeps all BoQ grids compact and stable on Streamlit Cloud:
+    - unique string column names
+    - numeric columns converted to numeric dtype
+    - complex object cells converted to text
+    - optional compact text preview for read-only tables
+    """
+    if df is None:
+        return pd.DataFrame()
+    out = df.copy()
+
+    # Guarantee unique string column names.
+    seen: dict[str, int] = {}
+    new_cols: list[str] = []
+    for col in out.columns:
+        name = str(col)
+        if name in seen:
+            seen[name] += 1
+            name = f"{name}_{seen[name]}"
+        else:
+            seen[name] = 0
+        new_cols.append(name)
+    out.columns = new_cols
+    out = out.reset_index(drop=True)
+
+    for col in out.columns:
+        lower = str(col).lower()
+        if lower in GRID_NUMERIC_COLUMNS or any(k in lower for k in ["amount", "cost", "rate", "quantity", "qty", "total", "area", "percent", "score"]):
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+        else:
+            def _cell_to_text(value: Any) -> str:
+                if value is None:
+                    return ""
+                if isinstance(value, (list, tuple, dict, set, pd.Series, pd.DataFrame)):
+                    return str(value)
+                try:
+                    if pd.isna(value):
+                        return ""
+                except (TypeError, ValueError):
+                    pass
+                text_value = str(value).replace("\r", " ").replace("\n", " ").replace("\t", " ")
+                return " ".join(text_value.split())
+            out[col] = out[col].apply(_cell_to_text)
+            if compact_text and not editable:
+                limit = GRID_TEXT_COMPACT_LIMITS.get(lower)
+                if limit:
+                    out[col] = out[col].apply(lambda x: _truncate_text(x, limit))
+    return out
+
+
+def _truncate_text(value: Any, limit: int) -> str:
+    value = "" if value is None else str(value)
+    if len(value) <= limit:
+        return value
+    return value[: max(0, limit - 1)].rstrip() + "…"
+
+
+def _safe_grid_config(config: dict[str, Any] | None, df: pd.DataFrame) -> dict[str, Any] | None:
+    """Remove column_config entries not present in the rendered dataframe."""
+    if not config:
+        return config
+    existing = {str(c) for c in df.columns}
+    return {str(k): v for k, v in config.items() if str(k) in existing}
+
+
+def _short_grid_label(name: str) -> str:
+    return GRID_SHORT_LABELS.get(str(name), _humanize_column_name(str(name)))
+
+
 def _humanize_column_name(name: str) -> str:
     """Return a compact, readable label for dataframe/editor columns."""
     label = str(name).replace("_", " ").strip().title()
@@ -527,33 +649,39 @@ def _humanize_column_name(name: str) -> str:
     return label
 
 
-def _grid_width_for_column(name: str) -> str:
-    """Choose compact widths so most BoQ columns fit without overlap."""
+def _grid_width_for_column(name: str, series: pd.Series | None = None) -> str:
+    """Return Streamlit-safe column width categories.
+
+    Streamlit Community Cloud can run different Streamlit minor versions. Pixel
+    widths may crash or behave inconsistently on older builds, while the safe
+    width categories below keep the grid compact and readable everywhere.
+    """
     n = str(name).lower()
+    if n in {"unit", "currency", "row_type"}:
+        return "small"
+    if any(key in n for key in ["edit_id", "item_code", "code"]):
+        return "small"
+    if any(key in n for key in ["quantity", "qty", "rate", "cost", "amount", "total", "risk", "area"]):
+        return "small"
     if any(key in n for key in ["description", "remarks", "comment", "issue", "finding"]):
         return "large"
-    if any(key in n for key in ["source_sheet", "package", "section", "subsection", "project_name", "source_file"]):
+    if any(key in n for key in ["section", "subsection", "source_sheet", "package", "project", "source_file"]):
         return "medium"
-    if any(key in n for key in ["cost", "amount", "rate", "quantity", "qty", "area", "percent", "score", "total"]):
-        return "small"
-    if any(key in n for key in ["code", "unit", "brand", "row_type", "currency", "edit_id", "id"]):
-        return "small"
     return "medium"
 
 
 def grid_column_config(df: pd.DataFrame, overrides: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Build Streamlit column_config with compact widths and correct numeric formats.
+    """Build Streamlit column_config with compact, safe widths.
 
-    This fixes the wide/overlapping column-menu issue by reducing grid text size,
-    using consistent column widths, and avoiding the browser trying to stretch long
-    headers like material_cost, total_cost, section_name, etc.
+    Labels are shortened and widths use Streamlit's own size categories so all
+    columns fit more cleanly and the column-menu popover does not overlap.
     """
     config: dict[str, Any] = {}
     if df is None or df.empty:
         return overrides or config
     for col in df.columns:
-        label = _humanize_column_name(col)
-        width = _grid_width_for_column(col)
+        label = _short_grid_label(col)
+        width = _grid_width_for_column(col, df[col])
         series = df[col]
         lower = str(col).lower()
         is_numeric = pd.api.types.is_numeric_dtype(series)
@@ -567,8 +695,27 @@ def grid_column_config(df: pd.DataFrame, overrides: dict[str, Any] | None = None
         else:
             config[col] = st.column_config.TextColumn(label, width=width)
     if overrides:
-        config.update(overrides)
+        # Convert unsafe pixel widths from old page-level configs to safe width categories.
+        cleaned: dict[str, Any] = {}
+        for key, value in overrides.items():
+            cleaned[str(key)] = _normalize_column_config_width(value, str(key))
+        config.update(cleaned)
     return config
+
+
+def _normalize_column_config_width(value: Any, col_name: str) -> Any:
+    """Replace pixel widths in existing st.column_config objects when possible.
+
+    Some older v1.3 pages still pass width=72/360. Pixel widths may not be
+    supported by every Streamlit Cloud runtime, so this rebuilds a safe config.
+    """
+    label = _short_grid_label(col_name)
+    width = _grid_width_for_column(col_name)
+    lower = col_name.lower()
+    if any(key in lower for key in ["quantity", "qty", "rate", "amount", "cost", "total", "risk", "area"]):
+        fmt = "$%.2f" if any(key in lower for key in ["rate", "amount", "cost", "total", "risk"]) else "%.4g"
+        return st.column_config.NumberColumn(label, width=width, format=fmt)
+    return st.column_config.TextColumn(label, width=width)
 
 
 def fit_dataframe(
@@ -577,24 +724,49 @@ def fit_dataframe(
     height: int | None = None,
     column_config: dict[str, Any] | None = None,
     hide_index: bool = True,
+    compact_text: bool = True,
     **kwargs: Any,
 ) -> None:
-    """Render a compact dataframe with safe widths and small readable text."""
+    """Render a compact dataframe with fitted columns and safe fallback."""
+    safe_df = safe_grid_dataframe(df, compact_text=compact_text)
     if height is None:
         try:
-            height = min(650, max(260, int(len(df) * 30 + 44)))
+            height = min(650, max(260, int(len(safe_df) * 26 + 46)))
         except Exception:
             height = 420
     kwargs.pop("use_container_width", None)
     kwargs.pop("hide_index", None)
-    st.dataframe(
-        df,
-        use_container_width=True,
-        height=height,
-        hide_index=hide_index,
-        column_config=grid_column_config(df, column_config),
-        **kwargs,
-    )
+    kwargs.pop("width", None)
+    cfg = grid_column_config(safe_df, _safe_grid_config(column_config, safe_df))
+
+    try:
+        st.dataframe(
+            safe_df,
+            use_container_width=True,
+            height=height,
+            hide_index=hide_index,
+            column_config=cfg,
+            row_height=26,
+            **kwargs,
+        )
+        return
+    except TypeError:
+        pass
+    except Exception:
+        pass
+
+    try:
+        st.dataframe(
+            safe_df,
+            use_container_width=True,
+            height=height,
+            hide_index=hide_index,
+            column_config=cfg,
+            **kwargs,
+        )
+        return
+    except Exception:
+        st.dataframe(safe_df, use_container_width=True, height=height)
 
 
 def fit_data_editor(
@@ -603,24 +775,61 @@ def fit_data_editor(
     height: int | None = None,
     column_config: dict[str, Any] | None = None,
     hide_index: bool = True,
+    disabled: bool | list[str] | tuple[str, ...] = False,
     **kwargs: Any,
 ) -> pd.DataFrame:
-    """Render a compact editable grid with safe widths and no text overlap."""
+    """Render a compact editable grid with fitted columns and no-crash fallback."""
+    safe_df = safe_grid_dataframe(df, editable=True, compact_text=False)
     if height is None:
         try:
-            height = min(660, max(320, int(len(df) * 30 + 60)))
+            height = min(660, max(330, int(len(safe_df) * 26 + 64)))
         except Exception:
-            height = 520
+            height = 540
     kwargs.pop("use_container_width", None)
     kwargs.pop("hide_index", None)
-    return st.data_editor(
-        df,
+    kwargs.pop("width", None)
+    cfg = grid_column_config(safe_df, _safe_grid_config(column_config, safe_df))
+
+    editor_kwargs = dict(
+        data=safe_df,
         use_container_width=True,
         height=height,
         hide_index=hide_index,
-        column_config=grid_column_config(df, column_config),
+        column_config=cfg,
+        disabled=disabled,
         **kwargs,
     )
+
+    try:
+        return st.data_editor(row_height=26, **editor_kwargs)
+    except TypeError:
+        try:
+            return st.data_editor(**editor_kwargs)
+        except Exception as exc:
+            return _data_editor_safe_fallback(safe_df, height, hide_index, cfg, exc)
+    except Exception as exc:
+        try:
+            # One more attempt with very simple config. This keeps editing possible
+            # even if Streamlit rejects a column_config object on the cloud runtime.
+            simple_kwargs = dict(editor_kwargs)
+            simple_kwargs.pop("column_config", None)
+            return st.data_editor(**simple_kwargs)
+        except Exception:
+            return _data_editor_safe_fallback(safe_df, height, hide_index, cfg, exc)
+
+
+def _data_editor_safe_fallback(
+    safe_df: pd.DataFrame,
+    height: int,
+    hide_index: bool,
+    cfg: dict[str, Any] | None,
+    exc: Exception,
+) -> pd.DataFrame:
+    """Show read-only preview instead of crashing the whole app."""
+    st.warning(t("editor_grid_fallback"))
+    st.caption(str(exc))
+    fit_dataframe(safe_df, height=min(620, height), column_config=cfg, hide_index=hide_index, compact_text=True)
+    return safe_df.copy()
 
 def download_dataframe_button(df: pd.DataFrame, filename: str, label: str | None = None) -> None:
     st.download_button(label or t("download_csv"), df.to_csv(index=False).encode("utf-8-sig"), filename, "text/csv")
