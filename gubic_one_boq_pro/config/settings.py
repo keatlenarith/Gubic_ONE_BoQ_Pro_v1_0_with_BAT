@@ -2,11 +2,7 @@
 from pathlib import Path
 
 APP_NAME = "Gubic ONE BoQ Pro"
-<<<<<<< HEAD
-APP_VERSION = "1.1.1"
-=======
 APP_VERSION = "1.1.2"
->>>>>>> 3fa6c8a (Set app font to Noto Sans Khmer)
 BRAND_COLOR = "#1B365D"
 ACCENT_COLOR = "#E8EEF5"
 LIGHT_BG = "#F7F9FC"
