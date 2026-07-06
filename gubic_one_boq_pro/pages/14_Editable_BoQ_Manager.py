@@ -165,7 +165,7 @@ with tab3:
     st.download_button(
         t("download_edited_boq_excel"),
         data=excel_bytes,
-        file_name="Gubic_ONE_Edited_BoQ_v1_3_0.xlsx",
+        file_name="Gubic_ONE_Edited_BoQ_v1_3_1.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True,
     )

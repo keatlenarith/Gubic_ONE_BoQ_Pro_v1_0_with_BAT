@@ -1,4 +1,4 @@
-"""Editable BoQ workspace helpers for Gubic ONE BoQ Pro v1.3.0.
+"""Editable BoQ workspace helpers for Gubic ONE BoQ Pro v1.3.1.
 
 The editor is intentionally session-first so it works on Streamlit Community
 Cloud without requiring a persistent external database. Users can apply edits to
@@ -33,10 +33,46 @@ EDITABLE_COLUMNS = [
 USER_EDIT_COLUMNS = [c for c in EDITABLE_COLUMNS if c != "edit_id"]
 
 
+def _is_blank(value: Any) -> bool:
+    """Return True for scalar blank-like values without triggering pandas ambiguity errors."""
+    if value is None:
+        return True
+    if isinstance(value, (pd.Series, pd.DataFrame, list, tuple, dict, set)):
+        return False
+    try:
+        return bool(pd.isna(value))
+    except (TypeError, ValueError):
+        return False
+
+
+def _safe_text(value: Any) -> str:
+    """Convert any editor cell value to stable text for audit comparisons."""
+    if isinstance(value, pd.DataFrame):
+        value = value.iloc[0].to_dict() if not value.empty else ""
+    if isinstance(value, pd.Series):
+        value = value.iloc[0] if not value.empty else ""
+    if _is_blank(value):
+        return ""
+    return str(value)
+
+
+def _row_get(row: Any, column: str, default: Any = "") -> Any:
+    """Safely get a scalar-like value from a row/Series/DataFrame."""
+    if isinstance(row, pd.DataFrame):
+        if row.empty or column not in row.columns:
+            return default
+        return row.iloc[0].get(column, default)
+    if isinstance(row, pd.Series):
+        return row.get(column, default)
+    return default
+
+
 def _clean_number(value: Any) -> float | None:
     """Convert user-edited numeric fields to float where possible."""
-    if value is None or pd.isna(value):
+    if _is_blank(value):
         return None
+    if isinstance(value, pd.Series):
+        value = value.iloc[0] if not value.empty else None
     text = str(value).strip()
     if text == "":
         return None
@@ -49,15 +85,24 @@ def _clean_number(value: Any) -> float | None:
 
 
 def ensure_edit_ids(df: pd.DataFrame) -> pd.DataFrame:
-    """Ensure every row has a stable edit_id for comparing and merging edits."""
-    out = df.copy()
+    """Ensure every row has a stable, unique edit_id for comparing and merging edits."""
+    out = df.copy().reset_index(drop=True)
     if "edit_id" not in out.columns:
         out.insert(0, "edit_id", [f"ROW-{i + 1:06d}" for i in range(len(out))])
-    else:
-        out["edit_id"] = out["edit_id"].astype(str)
-        missing = out["edit_id"].str.strip().isin(["", "nan", "None"])
-        if missing.any():
-            out.loc[missing, "edit_id"] = [f"ROW-{i + 1:06d}" for i in range(missing.sum())]
+        return out
+
+    cleaned_ids: list[str] = []
+    seen: set[str] = set()
+    for i, value in enumerate(out["edit_id"].tolist()):
+        text = _safe_text(value).strip()
+        if text.lower() in {"", "nan", "none", "nat"} or text in seen:
+            prefix = "NEW" if text.upper().startswith("NEW-") else "ROW"
+            text = f"{prefix}-{i + 1:06d}"
+            while text in seen:
+                text = f"{prefix}-{i + 1:06d}-{uuid.uuid4().hex[:4].upper()}"
+        cleaned_ids.append(text)
+        seen.add(text)
+    out["edit_id"] = cleaned_ids
     return out
 
 
@@ -82,8 +127,7 @@ def recalculate_edited_rows(df: pd.DataFrame, *, recalc_amount: bool = True) -> 
     for col in STANDARD_COLUMNS:
         if col not in out.columns:
             out[col] = None
-    if "edit_id" not in out.columns:
-        out = ensure_edit_ids(out)
+    out = ensure_edit_ids(out)
 
     for col in NUMERIC_COLUMNS:
         if col in out.columns:
@@ -157,27 +201,26 @@ def build_change_log(original_items: pd.DataFrame, edited_items: pd.DataFrame) -
     for edit_id in sorted(set(edited.index) - set(original.index)):
         row = edited.loc[edit_id]
         rows.append({
-            "change_type": "added", "edit_id": edit_id, "field": "row", "old_value": "", "new_value": row.get("item_description", ""),
-            "source_sheet": row.get("source_sheet", ""), "item_code": row.get("item_code", ""),
+            "change_type": "added", "edit_id": edit_id, "field": "row", "old_value": "", "new_value": _safe_text(_row_get(row, "item_description")),
+            "source_sheet": _safe_text(_row_get(row, "source_sheet")), "item_code": _safe_text(_row_get(row, "item_code")),
         })
     for edit_id in sorted(set(original.index) - set(edited.index)):
         row = original.loc[edit_id]
         rows.append({
-            "change_type": "deleted", "edit_id": edit_id, "field": "row", "old_value": row.get("item_description", ""), "new_value": "",
-            "source_sheet": row.get("source_sheet", ""), "item_code": row.get("item_code", ""),
+            "change_type": "deleted", "edit_id": edit_id, "field": "row", "old_value": _safe_text(_row_get(row, "item_description")), "new_value": "",
+            "source_sheet": _safe_text(_row_get(row, "source_sheet")), "item_code": _safe_text(_row_get(row, "item_code")),
         })
     for edit_id in sorted(set(original.index) & set(edited.index)):
         old = original.loc[edit_id]
         new = edited.loc[edit_id]
         for col in USER_EDIT_COLUMNS:
-            old_value = old.get(col, "")
-            new_value = new.get(col, "")
-            old_text = "" if pd.isna(old_value) else str(old_value)
-            new_text = "" if pd.isna(new_value) else str(new_value)
+            old_text = _safe_text(_row_get(old, col))
+            new_text = _safe_text(_row_get(new, col))
             if old_text != new_text:
                 rows.append({
                     "change_type": "changed", "edit_id": edit_id, "field": col, "old_value": old_text, "new_value": new_text,
-                    "source_sheet": new.get("source_sheet", old.get("source_sheet", "")), "item_code": new.get("item_code", old.get("item_code", "")),
+                    "source_sheet": _safe_text(_row_get(new, "source_sheet", _row_get(old, "source_sheet"))),
+                    "item_code": _safe_text(_row_get(new, "item_code", _row_get(old, "item_code"))),
                 })
     return pd.DataFrame(rows)
 
