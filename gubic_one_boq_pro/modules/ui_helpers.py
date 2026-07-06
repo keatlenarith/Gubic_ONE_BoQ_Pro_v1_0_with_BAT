@@ -352,6 +352,7 @@ def render_sidebar_navigation() -> None:
         ("pages/11_Settings.py", "settings", "⚙️"),
         ("pages/12_Parser_Lab.py", "parser_lab", "🧪"),
         ("pages/13_QA_Control.py", "qa_control", "✅"),
+        ("pages/14_Editable_BoQ_Manager.py", "editable_boq_manager", "✏️"),
     ]
     for page, label_key, emoji_icon in links:
         # Avoid Streamlit Material Symbols in the icon parameter. On some
