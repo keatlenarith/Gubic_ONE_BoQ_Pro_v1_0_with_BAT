@@ -208,8 +208,36 @@ def inject_css() -> None:
         .gubic-sidebar-section {{ color: #607087; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; margin: .7rem 0 .2rem 0; }}
         section[data-testid="stSidebar"] a {{
             line-height: 1.55 !important;
-            min-height: 38px !important;
+            min-height: 40px !important;
             overflow: visible !important;
+            border-radius: 10px !important;
+            margin: .06rem 0 !important;
+        }}
+        section[data-testid="stSidebar"] a svg,
+        section[data-testid="stSidebar"] a span[data-testid="stIconMaterial"],
+        section[data-testid="stSidebar"] a [data-testid="stIconMaterial"] {{
+            color: {BRAND_COLOR} !important;
+            fill: {BRAND_COLOR} !important;
+            font-size: 1.12rem !important;
+            width: 1.25rem !important;
+            min-width: 1.25rem !important;
+        }}
+        .gubic-nav-fallback {{
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            min-height: 40px;
+            padding: .35rem .55rem;
+            border-radius: 10px;
+            color: #172033;
+            font-weight: 600;
+            line-height: 1.55;
+        }}
+        .gubic-nav-icon {{
+            color: {BRAND_COLOR};
+            font-size: 1.08rem;
+            min-width: 1.35rem;
+            text-align: center;
         }}
         .gubic-header-wrap {{
             display: flex;
@@ -305,30 +333,41 @@ def render_sidebar_navigation() -> None:
     """
     st.sidebar.markdown(f"<div class='gubic-sidebar-section'>{t('navigation')}</div>", unsafe_allow_html=True)
     links = [
-        ("app.py", "home", "🏠"),
-        ("pages/01_Dashboard.py", "dashboard", "📊"),
-        ("pages/02_Project_Setup.py", "project_setup", "🏗️"),
-        ("pages/03_Import_BoQ.py", "import_boq", "📥"),
-        ("pages/04_BoQ_Database.py", "boq_database", "🧾"),
-        ("pages/05_Cost_Breakdown.py", "cost_breakdown", "💰"),
-        ("pages/06_Material_Analysis.py", "material_analysis", "🧱"),
-        ("pages/07_Labor_Analysis.py", "labor_analysis", "👷"),
-        ("pages/08_Equipment_Analysis.py", "equipment_analysis", "🚜"),
-        ("pages/09_Progress_Payment.py", "progress_payment", "📈"),
-        ("pages/10_Reports.py", "reports", "📄"),
-        ("pages/11_Settings.py", "settings", "⚙️"),
-        ("pages/12_Parser_Lab.py", "parser_lab", "🧪"),
-        ("pages/13_QA_Control.py", "qa_control", "✅"),
+        ("app.py", "home", ":material/home:", "🏠"),
+        ("pages/01_Dashboard.py", "dashboard", ":material/dashboard:", "📊"),
+        ("pages/02_Project_Setup.py", "project_setup", ":material/domain_add:", "🏗️"),
+        ("pages/03_Import_BoQ.py", "import_boq", ":material/upload_file:", "📥"),
+        ("pages/04_BoQ_Database.py", "boq_database", ":material/table_view:", "🧾"),
+        ("pages/05_Cost_Breakdown.py", "cost_breakdown", ":material/paid:", "💰"),
+        ("pages/06_Material_Analysis.py", "material_analysis", ":material/inventory_2:", "🧱"),
+        ("pages/07_Labor_Analysis.py", "labor_analysis", ":material/engineering:", "👷"),
+        ("pages/08_Equipment_Analysis.py", "equipment_analysis", ":material/construction:", "🚜"),
+        ("pages/09_Progress_Payment.py", "progress_payment", ":material/payments:", "📈"),
+        ("pages/10_Reports.py", "reports", ":material/description:", "📄"),
+        ("pages/11_Settings.py", "settings", ":material/settings:", "⚙️"),
+        ("pages/12_Parser_Lab.py", "parser_lab", ":material/science:", "🧪"),
+        ("pages/13_QA_Control.py", "qa_control", ":material/verified:", "✅"),
     ]
-    for page, label_key, icon in links:
-        # Use clean text labels only. This avoids Streamlit's collapsed default
-        # "View more" double-arrow behavior and keeps Khmer labels readable.
+    for page, label_key, material_icon, fallback_icon in links:
+        # Use Streamlit page_link icons so every menu item has a clear visual mark.
+        # If an older Streamlit build does not support icons, fall back to an
+        # emoji prefix instead of losing the menu symbol.
         label = t(label_key)
         try:
-            st.sidebar.page_link(page, label=label)
+            st.sidebar.page_link(page, label=label, icon=material_icon, use_container_width=True)
+        except TypeError:
+            try:
+                st.sidebar.page_link(page, label=f"{fallback_icon}  {label}")
+            except Exception:
+                st.sidebar.markdown(
+                    f"<div class='gubic-nav-fallback'><span class='gubic-nav-icon'>{fallback_icon}</span><span>{html.escape(label)}</span></div>",
+                    unsafe_allow_html=True,
+                )
         except Exception:
-            # page_link is available in Streamlit >=1.34; keep a harmless fallback.
-            st.sidebar.markdown(f"<div class='gubic-nav-fallback'>› {label}</div>", unsafe_allow_html=True)
+            st.sidebar.markdown(
+                f"<div class='gubic-nav-fallback'><span class='gubic-nav-icon'>{fallback_icon}</span><span>{html.escape(label)}</span></div>",
+                unsafe_allow_html=True,
+            )
 
 
 def _logo_data_uri() -> str:
