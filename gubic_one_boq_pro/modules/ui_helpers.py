@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Any
+import base64
 
 import pandas as pd
 import streamlit as st
@@ -41,6 +42,86 @@ def inject_css() -> None:
             font-family: {FONT_FAMILY} !important;
         }}
 
+
+        /* Khmer text layout patch: prevent glyph clipping/overlap in widgets. */
+        html, body, .stApp {
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+        }
+        .stMarkdown, .stMarkdown p, .stMarkdown li,
+        [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
+        [data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] p,
+        label, label p, .stRadio label, .stCheckbox label,
+        .stSelectbox label, .stTextInput label, .stNumberInput label,
+        .stMultiSelect label, .stFileUploader label {
+            line-height: 1.75 !important;
+            overflow: visible !important;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            line-height: 1.35 !important;
+            overflow: visible !important;
+            padding-top: .1rem;
+            padding-bottom: .18rem;
+        }
+        p, li, span, div {
+            overflow-wrap: anywhere;
+        }
+
+        /* Streamlit file uploader/radio/button patch. Khmer text needs taller controls. */
+        button, .stButton > button,
+        [data-testid="stFileUploader"] button,
+        [data-testid="baseButton-secondary"],
+        [data-testid="baseButton-primary"] {
+            min-height: 44px !important;
+            line-height: 1.45 !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+            padding: .55rem .9rem !important;
+        }
+        [data-testid="stFileUploader"] section {
+            padding: 1rem 1.1rem !important;
+            min-height: 74px !important;
+            overflow: visible !important;
+        }
+        [data-testid="stFileUploader"] small,
+        [data-testid="stFileUploaderDropzoneInstructions"] span {
+            line-height: 1.55 !important;
+            white-space: nowrap !important;
+        }
+        div[role="radiogroup"] label {
+            min-height: 34px !important;
+            align-items: center !important;
+            line-height: 1.7 !important;
+            padding-top: .15rem !important;
+            padding-bottom: .15rem !important;
+        }
+        .streamlit-expanderHeader,
+        [data-testid="stExpander"] details summary,
+        [data-testid="stExpander"] details summary p {
+            min-height: 42px !important;
+            line-height: 1.75 !important;
+            overflow: visible !important;
+        }
+        [data-testid="stTextInput"] input,
+        [data-testid="stNumberInput"] input,
+        [data-testid="stSelectbox"] div,
+        [data-testid="stMultiSelect"] div {
+            min-height: 42px !important;
+            line-height: 1.55 !important;
+        }
+
+        /* Dataframes and table headers need more vertical room for Khmer glyphs. */
+        [data-testid="stDataFrame"], .stDataFrame {
+            overflow: visible !important;
+        }
+        [data-testid="stDataFrame"] div,
+        [data-testid="stDataFrame"] span,
+        [data-testid="stDataFrame"] p,
+        [data-testid="stDataEditor"] div,
+        [data-testid="stDataEditor"] span {
+            line-height: 1.55 !important;
+        }
+
         .block-container {{ padding-top: 1.2rem; }}
         .stButton>button {{ border-radius: 10px; border: 1px solid {BRAND_COLOR}; }}
         .gubic-kpi {{ background: white; border: 1px solid #E6ECF2; border-radius: 16px; padding: 16px; min-height: 88px; }}
@@ -51,9 +132,60 @@ def inject_css() -> None:
         .gubic-sidebar-title {{ color: {BRAND_COLOR}; font-weight: 900; font-size: 1.08rem; line-height: 1.15; }}
         .gubic-sidebar-subtitle {{ color: #607087; font-size: .82rem; margin-top: .15rem; }}
         .gubic-sidebar-section {{ color: #607087; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; margin: .7rem 0 .2rem 0; }}
-        .gubic-header-wrap {{ display: flex; align-items: center; gap: 16px; margin-bottom: .4rem; }}
-        .gubic-header-title {{ color: {BRAND_COLOR}; margin: 0; font-weight: 900; letter-spacing: -.02em; }}
-        .gubic-header-subtitle {{ color: #607087; margin-top: .25rem; margin-bottom: 0; }}
+        .gubic-header-wrap {{
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: .15rem 0 1.05rem 0;
+            padding: .1rem 0 .2rem 0;
+        }}
+        .gubic-header-logo-box {{
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            border-radius: 14px;
+            background: #FFFFFF;
+            border: 1px solid #E6ECF2;
+            box-shadow: 0 4px 14px rgba(27, 54, 93, .06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .gubic-header-logo-box img {{
+            width: 34px;
+            height: 34px;
+            object-fit: contain;
+            display: block;
+        }}
+        .gubic-header-copy {{
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+        }}
+        .gubic-header-title {{
+            color: {BRAND_COLOR};
+            margin: 0;
+            font-weight: 900;
+            letter-spacing: -.02em;
+            line-height: 1.35 !important;
+            font-size: clamp(2.0rem, 3.2vw, 3.0rem);
+            overflow: visible !important;
+        }}
+        .gubic-header-subtitle {{
+            color: #607087;
+            margin-top: .42rem;
+            margin-bottom: 0;
+            line-height: 1.75 !important;
+            font-size: 1.02rem;
+            overflow: visible !important;
+        }}
+        @media (max-width: 768px) {{
+            .gubic-header-wrap {{ align-items: flex-start; gap: 10px; }}
+            .gubic-header-logo-box {{ width: 40px; height: 40px; min-width: 40px; border-radius: 12px; }}
+            .gubic-header-logo-box img {{ width: 28px; height: 28px; }}
+            .gubic-header-title {{ font-size: 1.55rem; line-height: 1.42 !important; }}
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -108,16 +240,38 @@ def render_sidebar_navigation() -> None:
             st.sidebar.markdown(f"{icon} {t(label_key)}")
 
 
+def _logo_data_uri() -> str:
+    """Return the Gubic logo as an inline data URI for a compact HTML header."""
+    if not LOGO_PATH.exists():
+        return ""
+    try:
+        encoded = base64.b64encode(LOGO_PATH.read_bytes()).decode("ascii")
+        return f"data:image/png;base64,{encoded}"
+    except Exception:
+        return ""
+
+
 def page_header(title: str, subtitle: str | None = None) -> None:
-    """Render a branded page heading with the Gubic logo."""
-    logo_col, title_col = st.columns([0.09, 0.91])
-    with logo_col:
-        if LOGO_PATH.exists():
-            st.image(str(LOGO_PATH), width=62)
-    with title_col:
-        st.markdown(f"<h1 class='gubic-header-title'>{title}</h1>", unsafe_allow_html=True)
-        if subtitle:
-            st.markdown(f"<p class='gubic-header-subtitle'>{subtitle}</p>", unsafe_allow_html=True)
+    """Render a compact branded page heading.
+
+    The logo is placed in a small inline badge instead of a Streamlit image
+    column, preventing the top logo from creating a large block/blank area.
+    """
+    logo_uri = _logo_data_uri()
+    logo_html = f"<div class='gubic-header-logo-box'><img src='{logo_uri}' alt='Gubic logo'></div>" if logo_uri else ""
+    subtitle_html = f"<p class='gubic-header-subtitle'>{subtitle}</p>" if subtitle else ""
+    st.markdown(
+        f"""
+        <div class='gubic-header-wrap'>
+            {logo_html}
+            <div class='gubic-header-copy'>
+                <h1 class='gubic-header-title'>{title}</h1>
+                {subtitle_html}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def kpi_card(label: str, value: Any) -> None:

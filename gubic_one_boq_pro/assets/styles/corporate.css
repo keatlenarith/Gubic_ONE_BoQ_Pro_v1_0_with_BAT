@@ -43,3 +43,68 @@ svg text, .plotly text, .js-plotly-plot text {
   color: #607087;
   font-size: 0.95rem;
 }
+
+
+/* Khmer overlap prevention patch v1.1.5 */
+html, body, .stApp {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+.stMarkdown, .stMarkdown p, .stMarkdown li,
+[data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
+[data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] p,
+label, label p, .stRadio label, .stCheckbox label,
+.stSelectbox label, .stTextInput label, .stNumberInput label,
+.stMultiSelect label, .stFileUploader label {
+  line-height: 1.75 !important;
+  overflow: visible !important;
+}
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.35 !important;
+  overflow: visible !important;
+  padding-top: .1rem;
+  padding-bottom: .18rem;
+}
+button, .stButton > button,
+[data-testid="stFileUploader"] button,
+[data-testid="baseButton-secondary"],
+[data-testid="baseButton-primary"] {
+  min-height: 44px !important;
+  line-height: 1.45 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  padding: .55rem .9rem !important;
+}
+[data-testid="stFileUploader"] section {
+  padding: 1rem 1.1rem !important;
+  min-height: 74px !important;
+  overflow: visible !important;
+}
+div[role="radiogroup"] label {
+  min-height: 34px !important;
+  align-items: center !important;
+  line-height: 1.7 !important;
+  padding-top: .15rem !important;
+  padding-bottom: .15rem !important;
+}
+.streamlit-expanderHeader,
+[data-testid="stExpander"] details summary,
+[data-testid="stExpander"] details summary p {
+  min-height: 42px !important;
+  line-height: 1.75 !important;
+  overflow: visible !important;
+}
+[data-testid="stTextInput"] input,
+[data-testid="stNumberInput"] input,
+[data-testid="stSelectbox"] div,
+[data-testid="stMultiSelect"] div {
+  min-height: 42px !important;
+  line-height: 1.55 !important;
+}
+[data-testid="stDataFrame"] div,
+[data-testid="stDataFrame"] span,
+[data-testid="stDataFrame"] p,
+[data-testid="stDataEditor"] div,
+[data-testid="stDataEditor"] span {
+  line-height: 1.55 !important;
+}
