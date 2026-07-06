@@ -1,6 +1,14 @@
-# Gubic ONE BoQ Pro v1.1
+# Gubic ONE BoQ Pro v1.1.2
 
 **Gubic ONE BoQ Pro** is a professional Bill of Quantities dashboard, construction cost intelligence, validation, and report export system. It imports complex Excel-based BoQ workbooks, detects usable sheets, cleans and standardizes item rows, calculates cost breakdowns, and creates executive dashboards for project owners, consultants, contractors, and quantity surveyors.
+
+
+## v1.1.2 Font Update
+
+- App interface font changed to **Noto Sans Khmer** for clearer Khmer/English display.
+- CSS loads Noto Sans Khmer from Google Fonts when online and falls back to Segoe UI/system fonts if unavailable.
+- Plotly dashboard charts also use the same Noto Sans Khmer font stack.
+- Word report export is set to Noto Sans Khmer where the font is available on the user computer.
 
 ## v1.1 Update Summary
 

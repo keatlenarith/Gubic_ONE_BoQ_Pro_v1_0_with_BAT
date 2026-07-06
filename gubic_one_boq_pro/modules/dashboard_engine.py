@@ -7,13 +7,20 @@ import plotly.graph_objects as go
 
 from modules.cost_engine import cost_breakdown, package_ranking, pareto_table, top_items
 from modules.i18n import t
+from config.settings import FONT_FAMILY
+
+
+def _apply_font(fig: go.Figure) -> go.Figure:
+    """Apply Gubic UI font to all Plotly charts, including Khmer labels."""
+    fig.update_layout(font={"family": FONT_FAMILY})
+    return fig
 
 
 def _empty_figure(title: str) -> go.Figure:
     fig = go.Figure()
-    fig.update_layout(title=title, template="plotly_white", height=360)
+    fig.update_layout(title=title, template="plotly_white", height=360, font={"family": FONT_FAMILY})
     fig.add_annotation(text=t("no_data_available"), x=0.5, y=0.5, showarrow=False)
-    return fig
+    return _apply_font(fig)
 
 
 def cost_breakdown_pie(df: pd.DataFrame) -> go.Figure:
@@ -33,7 +40,7 @@ def cost_breakdown_pie(df: pd.DataFrame) -> go.Figure:
     fig = px.pie(data, names="cost_type_label", values="amount", title=t("chart_cost_breakdown_type"), hole=0.45)
     fig.update_traces(textposition="inside", textinfo="percent+label")
     fig.update_layout(template="plotly_white", height=420, legend_title_text=t("cost_type"))
-    return fig
+    return _apply_font(fig)
 
 
 def package_bar(df: pd.DataFrame, top_n: int = 15) -> go.Figure:
@@ -43,7 +50,7 @@ def package_bar(df: pd.DataFrame, top_n: int = 15) -> go.Figure:
     fig = px.bar(data, x="total_cost", y="source_sheet", orientation="h", title=t("chart_package_ranking", n=top_n), text="total_cost")
     fig.update_traces(texttemplate="$%{text:,.0f}", textposition="outside")
     fig.update_layout(template="plotly_white", height=480, yaxis={"categoryorder": "total ascending"}, xaxis_title=t("total_cost_usd"), yaxis_title=t("package_sheet"))
-    return fig
+    return _apply_font(fig)
 
 
 def material_labor_stacked(df: pd.DataFrame) -> go.Figure:
@@ -60,7 +67,7 @@ def material_labor_stacked(df: pd.DataFrame) -> go.Figure:
     fig.add_bar(y=data["source_sheet"], x=data["material"], name=t("material"), orientation="h")
     fig.add_bar(y=data["source_sheet"], x=data["labor"], name=t("labor"), orientation="h")
     fig.update_layout(barmode="stack", template="plotly_white", title=t("chart_material_labor"), height=460, xaxis_title="USD", yaxis_title=t("package_sheet"))
-    return fig
+    return _apply_font(fig)
 
 
 def top_items_bar(df: pd.DataFrame, n: int = 20) -> go.Figure:
@@ -71,7 +78,7 @@ def top_items_bar(df: pd.DataFrame, n: int = 20) -> go.Figure:
     data["label"] = data["item_description"].astype(str).str.slice(0, 70)
     fig = px.bar(data, x="total_cost", y="label", orientation="h", title=t("chart_top_expensive", n=n), hover_data=[c for c in ["source_sheet", "item_code", "unit", "quantity"] if c in data])
     fig.update_layout(template="plotly_white", height=620, yaxis={"categoryorder": "total ascending"}, xaxis_title=t("total_cost_usd"), yaxis_title=t("item"))
-    return fig
+    return _apply_font(fig)
 
 
 def pareto_chart(df: pd.DataFrame) -> go.Figure:
@@ -89,7 +96,7 @@ def pareto_chart(df: pd.DataFrame) -> go.Figure:
         yaxis=dict(title=t("cost_usd")),
         yaxis2=dict(title=t("cumulative_pct"), overlaying="y", side="right", tickformat=".0%", range=[0, 1.05]),
     )
-    return fig
+    return _apply_font(fig)
 
 
 def cost_per_m2_indicator(cost_per_m2: float, area_m2: float) -> go.Figure:
@@ -100,4 +107,4 @@ def cost_per_m2_indicator(cost_per_m2: float, area_m2: float) -> go.Figure:
         title={"text": f"{t('chart_cost_per_m2')}<br><span style='font-size:0.8em;color:gray'>{t('area')}: {area_m2:,.2f} m²</span>"},
     ))
     fig.update_layout(template="plotly_white", height=260)
-    return fig
+    return _apply_font(fig)
