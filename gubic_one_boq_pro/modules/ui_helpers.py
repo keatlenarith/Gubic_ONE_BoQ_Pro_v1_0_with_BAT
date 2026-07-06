@@ -44,83 +44,83 @@ def inject_css() -> None:
 
 
         /* Khmer text layout patch: prevent glyph clipping/overlap in widgets. */
-        html, body, .stApp {
+        html, body, .stApp {{
             text-rendering: optimizeLegibility;
             -webkit-font-smoothing: antialiased;
-        }
+        }}
         .stMarkdown, .stMarkdown p, .stMarkdown li,
         [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
         [data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] p,
         label, label p, .stRadio label, .stCheckbox label,
         .stSelectbox label, .stTextInput label, .stNumberInput label,
-        .stMultiSelect label, .stFileUploader label {
+        .stMultiSelect label, .stFileUploader label {{
             line-height: 1.75 !important;
             overflow: visible !important;
-        }
-        h1, h2, h3, h4, h5, h6 {
+        }}
+        h1, h2, h3, h4, h5, h6 {{
             line-height: 1.35 !important;
             overflow: visible !important;
             padding-top: .1rem;
             padding-bottom: .18rem;
-        }
-        p, li, span, div {
+        }}
+        p, li, span, div {{
             overflow-wrap: anywhere;
-        }
+        }}
 
         /* Streamlit file uploader/radio/button patch. Khmer text needs taller controls. */
         button, .stButton > button,
         [data-testid="stFileUploader"] button,
         [data-testid="baseButton-secondary"],
-        [data-testid="baseButton-primary"] {
+        [data-testid="baseButton-primary"] {{
             min-height: 44px !important;
             line-height: 1.45 !important;
             white-space: nowrap !important;
             overflow: visible !important;
             padding: .55rem .9rem !important;
-        }
-        [data-testid="stFileUploader"] section {
+        }}
+        [data-testid="stFileUploader"] section {{
             padding: 1rem 1.1rem !important;
             min-height: 74px !important;
             overflow: visible !important;
-        }
+        }}
         [data-testid="stFileUploader"] small,
-        [data-testid="stFileUploaderDropzoneInstructions"] span {
+        [data-testid="stFileUploaderDropzoneInstructions"] span {{
             line-height: 1.55 !important;
             white-space: nowrap !important;
-        }
-        div[role="radiogroup"] label {
+        }}
+        div[role="radiogroup"] label {{
             min-height: 34px !important;
             align-items: center !important;
             line-height: 1.7 !important;
             padding-top: .15rem !important;
             padding-bottom: .15rem !important;
-        }
+        }}
         .streamlit-expanderHeader,
         [data-testid="stExpander"] details summary,
-        [data-testid="stExpander"] details summary p {
+        [data-testid="stExpander"] details summary p {{
             min-height: 42px !important;
             line-height: 1.75 !important;
             overflow: visible !important;
-        }
+        }}
         [data-testid="stTextInput"] input,
         [data-testid="stNumberInput"] input,
         [data-testid="stSelectbox"] div,
-        [data-testid="stMultiSelect"] div {
+        [data-testid="stMultiSelect"] div {{
             min-height: 42px !important;
             line-height: 1.55 !important;
-        }
+        }}
 
         /* Dataframes and table headers need more vertical room for Khmer glyphs. */
-        [data-testid="stDataFrame"], .stDataFrame {
+        [data-testid="stDataFrame"], .stDataFrame {{
             overflow: visible !important;
-        }
+        }}
         [data-testid="stDataFrame"] div,
         [data-testid="stDataFrame"] span,
         [data-testid="stDataFrame"] p,
         [data-testid="stDataEditor"] div,
-        [data-testid="stDataEditor"] span {
+        [data-testid="stDataEditor"] span {{
             line-height: 1.55 !important;
-        }
+        }}
 
         .block-container {{ padding-top: 1.2rem; }}
         .stButton>button {{ border-radius: 10px; border: 1px solid {BRAND_COLOR}; }}
