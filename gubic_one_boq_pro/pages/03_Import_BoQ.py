@@ -20,7 +20,8 @@ page_header(t("import_boq"), t("import_boq_subtitle"))
 source_mode = st.radio(t("source"), [t("upload_excel_file"), t("use_sample_workbook")], horizontal=True)
 path = None
 if source_mode == t("upload_excel_file"):
-    uploaded = st.file_uploader(t("upload_xlsx"), type=["xlsx"])
+    st.markdown(f"<div class='gubic-field-label'>{t('upload_xlsx')}</div>", unsafe_allow_html=True)
+    uploaded = st.file_uploader("xlsx", type=["xlsx"], label_visibility="collapsed", key="import_boq_upload")
     if uploaded:
         path = write_uploaded_file(uploaded, UPLOAD_DIR)
 else:

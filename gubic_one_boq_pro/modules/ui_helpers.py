@@ -21,10 +21,14 @@ def inject_css() -> None:
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700;800;900&display=swap');
 
         /* Hide Streamlit's automatic multipage menu so we can render KH/EN labels. */
-        [data-testid="stSidebarNav"] {{
+        [data-testid="stSidebarNav"],
+        [data-testid="stSidebarNavItems"],
+        [data-testid="stSidebarNavSeparator"],
+        section[data-testid="stSidebar"] div[role="navigation"] {{
             display: none !important;
             visibility: hidden !important;
             height: 0 !important;
+            overflow: hidden !important;
         }}
 
         /* Force Noto Sans Khmer across Streamlit widgets, markdown, tables and headings. */
@@ -63,7 +67,8 @@ def inject_css() -> None:
             padding-top: .1rem;
             padding-bottom: .18rem;
         }}
-        p, li, span, div {{
+        .stMarkdown p, .stMarkdown li,
+        .gubic-kpi-label, .gubic-insight-comment, .gubic-header-subtitle {{
             overflow-wrap: anywhere;
         }}
 
@@ -87,6 +92,43 @@ def inject_css() -> None:
         [data-testid="stFileUploaderDropzoneInstructions"] span {{
             line-height: 1.55 !important;
             white-space: nowrap !important;
+        }}
+        .gubic-field-label {{
+            color: #344865;
+            font-weight: 700;
+            line-height: 1.8 !important;
+            margin: .35rem 0 .25rem 0;
+            overflow: visible !important;
+        }}
+        [data-testid="stFileUploader"] label {{
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }}
+        [data-testid="stFileUploader"] button,
+        [data-testid="stFileUploader"] [data-testid="baseButton-secondary"] {{
+            min-width: 128px !important;
+            max-width: 160px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: .35rem .75rem !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }}
+        [data-testid="stFileUploader"] button div,
+        [data-testid="stFileUploader"] button p,
+        [data-testid="stFileUploader"] button span {{
+            display: inline-block !important;
+            line-height: 1.2 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
         }}
         div[role="radiogroup"] label {{
             min-height: 34px !important;
@@ -128,10 +170,23 @@ def inject_css() -> None:
         .gubic-kpi-label {{ color: #607087; font-size: .78rem; font-weight: 600; }}
         .gubic-kpi-value {{ color: {BRAND_COLOR}; font-size: 1.35rem; font-weight: 800; }}
         .gubic-callout {{ background: {ACCENT_COLOR}; padding: 14px 16px; border-radius: 14px; color: #172033; }}
+        .gubic-insight-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin: .35rem 0 1.0rem 0; }}
+        .gubic-insight {{ background: #fff; border: 1px solid #E6ECF2; border-left: 5px solid {BRAND_COLOR}; border-radius: 14px; padding: 14px 15px; box-shadow: 0 4px 14px rgba(27, 54, 93, .04); }}
+        .gubic-insight.success {{ border-left-color: #1F9D55; }}
+        .gubic-insight.warning {{ border-left-color: #C59D2E; }}
+        .gubic-insight.danger {{ border-left-color: #D64545; }}
+        .gubic-insight-title {{ color: #607087; font-weight: 800; font-size: .78rem; line-height: 1.65; }}
+        .gubic-insight-value {{ color: {BRAND_COLOR}; font-weight: 900; font-size: 1.1rem; line-height: 1.55; margin-top: .15rem; }}
+        .gubic-insight-comment {{ color: #4E5D70; font-size: .85rem; line-height: 1.75; margin-top: .25rem; }}
         .gubic-sidebar-brand {{ margin: -0.3rem 0 .75rem 0; padding-bottom: .85rem; border-bottom: 1px solid #E6ECF2; }}
         .gubic-sidebar-title {{ color: {BRAND_COLOR}; font-weight: 900; font-size: 1.08rem; line-height: 1.15; }}
         .gubic-sidebar-subtitle {{ color: #607087; font-size: .82rem; margin-top: .15rem; }}
         .gubic-sidebar-section {{ color: #607087; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; margin: .7rem 0 .2rem 0; }}
+        section[data-testid="stSidebar"] a {{
+            line-height: 1.55 !important;
+            min-height: 38px !important;
+            overflow: visible !important;
+        }}
         .gubic-header-wrap {{
             display: flex;
             align-items: center;
@@ -231,13 +286,17 @@ def render_sidebar_navigation() -> None:
         ("pages/10_Reports.py", "reports", "📄"),
         ("pages/11_Settings.py", "settings", "⚙️"),
         ("pages/12_Parser_Lab.py", "parser_lab", "🧪"),
+        ("pages/13_QA_Control.py", "qa_control", "✅"),
     ]
     for page, label_key, icon in links:
+        # Use clean text labels only. This avoids Streamlit's collapsed default
+        # "View more" double-arrow behavior and keeps Khmer labels readable.
+        label = t(label_key)
         try:
-            st.sidebar.page_link(page, label=t(label_key), icon=icon)
+            st.sidebar.page_link(page, label=label)
         except Exception:
             # page_link is available in Streamlit >=1.34; keep a harmless fallback.
-            st.sidebar.markdown(f"{icon} {t(label_key)}")
+            st.sidebar.markdown(f"<div class='gubic-nav-fallback'>› {label}</div>", unsafe_allow_html=True)
 
 
 def _logo_data_uri() -> str:
@@ -272,6 +331,25 @@ def page_header(title: str, subtitle: str | None = None) -> None:
         """,
         unsafe_allow_html=True,
     )
+
+
+def render_insight_panel(insights: list[dict[str, str]]) -> None:
+    """Render executive insight cards with compact status colors."""
+    if not insights:
+        return
+    cards = []
+    for item in insights:
+        status = item.get("status", "info")
+        cards.append(
+            f"""
+            <div class='gubic-insight {status}'>
+                <div class='gubic-insight-title'>{item.get('title', '')}</div>
+                <div class='gubic-insight-value'>{item.get('value', '')}</div>
+                <div class='gubic-insight-comment'>{item.get('comment', '')}</div>
+            </div>
+            """
+        )
+    st.markdown("<div class='gubic-insight-grid'>" + "".join(cards) + "</div>", unsafe_allow_html=True)
 
 
 def kpi_card(label: str, value: Any) -> None:

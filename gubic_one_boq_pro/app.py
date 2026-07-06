@@ -7,7 +7,8 @@ from database.db_manager import init_db
 from modules.cost_engine import calculate_kpis
 from modules.dashboard_engine import cost_breakdown_pie, package_bar, material_labor_stacked, top_items_bar, cost_per_m2_indicator, pareto_chart
 from modules.i18n import t
-from modules.ui_helpers import get_active_data, inject_css, kpi_card, page_header
+from modules.insight_engine import executive_insights
+from modules.ui_helpers import get_active_data, inject_css, kpi_card, page_header, render_insight_panel
 
 st.set_page_config(page_title=f"{APP_NAME} v{APP_VERSION}", page_icon=str(FAVICON_PATH), layout="wide")
 inject_css()
@@ -44,6 +45,9 @@ with row2[2]: kpi_card(t("cost_per_m2"), f"${kpis['cost_per_m2']:,.2f}/m²")
 with row2[3]: kpi_card(t("boq_items"), f"{kpis['number_of_boq_items']:,}")
 
 st.divider()
+st.subheader(t("executive_insights"))
+render_insight_panel(executive_insights(df))
+
 left, right = st.columns([1, 1])
 with left:
     st.plotly_chart(cost_breakdown_pie(df), use_container_width=True)

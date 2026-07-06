@@ -1,11 +1,11 @@
-# Gubic ONE BoQ Pro v1.1.6
+# Gubic ONE BoQ Pro v1.2.1
 
 **Gubic ONE BoQ Pro** is a professional Bill of Quantities dashboard, construction cost intelligence, validation, and report export system. It imports complex Excel-based BoQ workbooks, detects usable sheets, cleans and standardizes item rows, calculates cost breakdowns, and creates executive dashboards for project owners, consultants, contractors, and quantity surveyors.
 
 
-## v1.1.6 Khmer Text Layout Patch
+## v1.2.1 Khmer Text Layout Patch
 
-The v1.1.6 patch improves Khmer font rendering and prevents text overlap in headers, file uploader controls, radio buttons, expanders, tables, and buttons.
+The v1.2.1 patch improves Khmer font rendering and prevents text overlap in headers, file uploader controls, radio buttons, expanders, tables, and buttons.
 
 
 - App interface font changed to **Noto Sans Khmer** for clearer Khmer/English display.
@@ -267,7 +267,7 @@ Recommended v1.2+ improvements:
 The app includes the Gubic logo in `assets/logo/gubic_logo.png` and uses it in the sidebar, page headers, and browser tab icon.
 
 
-## v1.1.6 KH/EN Language Setting
+## v1.2.1 KH/EN Language Setting
 
 Gubic ONE BoQ Pro now includes a sidebar language selector for:
 
@@ -285,3 +285,12 @@ git push
 ```
 
 Streamlit Cloud will redeploy from the GitHub `main` branch automatically.
+
+
+## v1.2.1 Additions
+
+- Executive insight cards on the main dashboard.
+- New QA Control page for validation score, error/warning summary, and risk watchlist.
+- Downloadable QA summary, validation findings, and risk watchlist CSV files.
+- Better Streamlit Cloud update helper: `update_github_force.bat`.
+- Retains KH/EN interface, Gubic logo, Noto Sans Khmer font, Parser Lab, and BoQ export tools.
