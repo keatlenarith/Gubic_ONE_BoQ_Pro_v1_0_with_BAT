@@ -42,10 +42,10 @@ deactivate nondestructive
 if [ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "msys" ] ; then
     # transform D:\path\to\venv to /d/path/to/venv on MSYS
     # and to /cygdrive/d/path/to/venv on Cygwin
-    export VIRTUAL_ENV=$(cygpath "C:\Users\KEAT LENARITH\Downloads\Gubic_ONE_BoQ_Pro_v1_0_with_BAT\gubic_one_boq_pro\.venv")
+    export VIRTUAL_ENV=$(cygpath "C:\Users\KEAT LENARITH\Documents\GitHub\Gubic_ONE_BoQ_Pro_v1_0_with_BAT\gubic_one_boq_pro\.venv")
 else
     # use the path as-is
-    export VIRTUAL_ENV="C:\Users\KEAT LENARITH\Downloads\Gubic_ONE_BoQ_Pro_v1_0_with_BAT\gubic_one_boq_pro\.venv"
+    export VIRTUAL_ENV="C:\Users\KEAT LENARITH\Documents\GitHub\Gubic_ONE_BoQ_Pro_v1_0_with_BAT\gubic_one_boq_pro\.venv"
 fi
 
 _OLD_VIRTUAL_PATH="$PATH"

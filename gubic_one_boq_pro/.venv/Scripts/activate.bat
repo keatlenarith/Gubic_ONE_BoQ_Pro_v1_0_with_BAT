@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\KEAT LENARITH\Downloads\Gubic_ONE_BoQ_Pro_v1_0_with_BAT\gubic_one_boq_pro\.venv
+set VIRTUAL_ENV=C:\Users\KEAT LENARITH\Documents\GitHub\Gubic_ONE_BoQ_Pro_v1_0_with_BAT\gubic_one_boq_pro\.venv
 
 if not defined PROMPT set PROMPT=$P$G
 
