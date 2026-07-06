@@ -2,7 +2,7 @@
 from pathlib import Path
 
 APP_NAME = "Gubic ONE BoQ Pro"
-APP_VERSION = "1.2.4"
+APP_VERSION = "1.2.5"
 BRAND_COLOR = "#1B365D"
 ACCENT_COLOR = "#E8EEF5"
 LIGHT_BG = "#F7F9FC"

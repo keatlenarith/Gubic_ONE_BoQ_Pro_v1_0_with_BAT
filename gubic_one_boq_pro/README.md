@@ -1,4 +1,4 @@
-# Gubic ONE BoQ Pro v1.2.4
+# Gubic ONE BoQ Pro v1.2.5
 
 **Gubic ONE BoQ Pro** is a professional Bill of Quantities dashboard, construction cost intelligence, validation, and report export system. It imports complex Excel-based BoQ workbooks, detects usable sheets, cleans and standardizes item rows, calculates cost breakdowns, and creates executive dashboards for project owners, consultants, contractors, and quantity surveyors.
 

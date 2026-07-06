@@ -224,9 +224,9 @@ def inject_css() -> None:
         }}
         /* v1.2.4: Do not display raw Material Symbol names if Streamlit lacks the icon font. */
         section[data-testid="stSidebar"] a span[data-testid="stIconMaterial"],
-        section[data-testid="stSidebar"] a [data-testid="stIconMaterial"] {
+        section[data-testid="stSidebar"] a [data-testid="stIconMaterial"] {{
             display: none !important;
-        }
+        }}
         .gubic-nav-fallback {{
             display: flex;
             align-items: center;
