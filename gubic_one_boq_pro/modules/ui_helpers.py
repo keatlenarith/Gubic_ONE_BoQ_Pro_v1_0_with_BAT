@@ -222,6 +222,11 @@ def inject_css() -> None:
             width: 1.25rem !important;
             min-width: 1.25rem !important;
         }}
+        /* v1.2.4: Do not display raw Material Symbol names if Streamlit lacks the icon font. */
+        section[data-testid="stSidebar"] a span[data-testid="stIconMaterial"],
+        section[data-testid="stSidebar"] a [data-testid="stIconMaterial"] {
+            display: none !important;
+        }
         .gubic-nav-fallback {{
             display: flex;
             align-items: center;
@@ -333,39 +338,40 @@ def render_sidebar_navigation() -> None:
     """
     st.sidebar.markdown(f"<div class='gubic-sidebar-section'>{t('navigation')}</div>", unsafe_allow_html=True)
     links = [
-        ("app.py", "home", ":material/home:", "🏠"),
-        ("pages/01_Dashboard.py", "dashboard", ":material/dashboard:", "📊"),
-        ("pages/02_Project_Setup.py", "project_setup", ":material/domain_add:", "🏗️"),
-        ("pages/03_Import_BoQ.py", "import_boq", ":material/upload_file:", "📥"),
-        ("pages/04_BoQ_Database.py", "boq_database", ":material/table_view:", "🧾"),
-        ("pages/05_Cost_Breakdown.py", "cost_breakdown", ":material/paid:", "💰"),
-        ("pages/06_Material_Analysis.py", "material_analysis", ":material/inventory_2:", "🧱"),
-        ("pages/07_Labor_Analysis.py", "labor_analysis", ":material/engineering:", "👷"),
-        ("pages/08_Equipment_Analysis.py", "equipment_analysis", ":material/construction:", "🚜"),
-        ("pages/09_Progress_Payment.py", "progress_payment", ":material/payments:", "📈"),
-        ("pages/10_Reports.py", "reports", ":material/description:", "📄"),
-        ("pages/11_Settings.py", "settings", ":material/settings:", "⚙️"),
-        ("pages/12_Parser_Lab.py", "parser_lab", ":material/science:", "🧪"),
-        ("pages/13_QA_Control.py", "qa_control", ":material/verified:", "✅"),
+        ("app.py", "home", "🏠"),
+        ("pages/01_Dashboard.py", "dashboard", "📊"),
+        ("pages/02_Project_Setup.py", "project_setup", "🏗️"),
+        ("pages/03_Import_BoQ.py", "import_boq", "📥"),
+        ("pages/04_BoQ_Database.py", "boq_database", "🧾"),
+        ("pages/05_Cost_Breakdown.py", "cost_breakdown", "💰"),
+        ("pages/06_Material_Analysis.py", "material_analysis", "🧱"),
+        ("pages/07_Labor_Analysis.py", "labor_analysis", "👷"),
+        ("pages/08_Equipment_Analysis.py", "equipment_analysis", "🚜"),
+        ("pages/09_Progress_Payment.py", "progress_payment", "📈"),
+        ("pages/10_Reports.py", "reports", "📄"),
+        ("pages/11_Settings.py", "settings", "⚙️"),
+        ("pages/12_Parser_Lab.py", "parser_lab", "🧪"),
+        ("pages/13_QA_Control.py", "qa_control", "✅"),
     ]
-    for page, label_key, material_icon, fallback_icon in links:
-        # Use Streamlit page_link icons so every menu item has a clear visual mark.
-        # If an older Streamlit build does not support icons, fall back to an
-        # emoji prefix instead of losing the menu symbol.
-        label = t(label_key)
+    for page, label_key, emoji_icon in links:
+        # Avoid Streamlit Material Symbols in the icon parameter. On some
+        # Community Cloud builds the icon font is not loaded and the icon name
+        # renders as visible text such as "home" or "dashboard", causing
+        # ugly overlap. Use compact emoji prefixes inside the label instead.
+        label = f"{emoji_icon}  {t(label_key)}"
         try:
-            st.sidebar.page_link(page, label=label, icon=material_icon, use_container_width=True)
+            st.sidebar.page_link(page, label=label, use_container_width=True)
         except TypeError:
             try:
-                st.sidebar.page_link(page, label=f"{fallback_icon}  {label}")
+                st.sidebar.page_link(page, label=label)
             except Exception:
                 st.sidebar.markdown(
-                    f"<div class='gubic-nav-fallback'><span class='gubic-nav-icon'>{fallback_icon}</span><span>{html.escape(label)}</span></div>",
+                    f"<div class='gubic-nav-fallback'><span class='gubic-nav-icon'>{emoji_icon}</span><span>{html.escape(t(label_key))}</span></div>",
                     unsafe_allow_html=True,
                 )
         except Exception:
             st.sidebar.markdown(
-                f"<div class='gubic-nav-fallback'><span class='gubic-nav-icon'>{fallback_icon}</span><span>{html.escape(label)}</span></div>",
+                f"<div class='gubic-nav-fallback'><span class='gubic-nav-icon'>{emoji_icon}</span><span>{html.escape(t(label_key))}</span></div>",
                 unsafe_allow_html=True,
             )
 
