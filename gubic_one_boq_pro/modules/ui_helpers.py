@@ -470,6 +470,7 @@ def get_active_data() -> tuple[dict[str, Any] | None, pd.DataFrame]:
             df, warnings, meta = parse_boq_workbook(samples[0])
             if not df.empty:
                 meta["warnings"] = warnings
+                meta["is_sample"] = True
                 st.session_state["project_meta"] = meta
                 st.session_state["boq_df"] = df
                 return meta, df

@@ -3,14 +3,22 @@ from config.settings import FAVICON_PATH
 import streamlit as st
 from database.db_manager import list_projects, load_project
 from modules.i18n import t
-from modules.ui_helpers import inject_css, page_header, fit_dataframe
+from modules.ui_helpers import inject_css, page_header, fit_dataframe, get_active_data
 
 st.set_page_config(page_title="Project Setup - Gubic ONE BoQ Pro", page_icon=str(FAVICON_PATH), layout="wide")
 inject_css()
 page_header(t("project_setup"), t("project_setup_subtitle"))
+active_meta, active_df = get_active_data()
 projects = list_projects()
 if projects.empty:
-    st.info(t("no_saved_projects"))
+    if active_meta and not active_df.empty:
+        st.success(f"{t('active_project')}: {active_meta.get('project_name', 'Imported BoQ Project')}")
+        if active_meta.get("is_sample"):
+            st.info(t("session_project_not_saved"))
+        else:
+            st.caption(t("session_project_active"))
+    else:
+        st.info(t("no_saved_projects"))
 else:
     fit_dataframe(projects, use_container_width=True)
     project_ids = projects["project_id"].tolist()
