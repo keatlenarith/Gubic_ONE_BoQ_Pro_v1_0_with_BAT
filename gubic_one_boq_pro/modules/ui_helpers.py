@@ -145,6 +145,27 @@ def inject_css() -> None:
             line-height: 1.75 !important;
             overflow: visible !important;
         }}
+        /* Streamlit may expose Material Symbol ligature names as plain text
+           when the icon font is unavailable. Hide that broken glyph label and
+           provide a font-independent disclosure arrow instead. */
+        [data-testid="stExpander"] details summary [data-testid="stIconMaterial"] {{
+            display: none !important;
+        }}
+        [data-testid="stExpander"] details summary::before {{
+            content: "▸";
+            color: {BRAND_COLOR};
+            display: inline-block;
+            flex: 0 0 1rem;
+            font-family: "Segoe UI Symbol", sans-serif !important;
+            font-size: .92rem;
+            line-height: 1;
+            margin-right: .35rem;
+            transform-origin: center;
+            transition: transform .15s ease;
+        }}
+        [data-testid="stExpander"] details[open] > summary::before {{
+            transform: rotate(90deg);
+        }}
         [data-testid="stTextInput"] input,
         [data-testid="stNumberInput"] input,
         [data-testid="stSelectbox"] div,
