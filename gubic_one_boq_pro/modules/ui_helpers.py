@@ -145,26 +145,34 @@ def inject_css() -> None:
             line-height: 1.75 !important;
             overflow: visible !important;
         }}
-        /* Streamlit may expose Material Symbol ligature names as plain text
-           when the icon font is unavailable. Hide that broken glyph label and
-           provide a font-independent disclosure arrow instead. */
+        /* v1.3.7 icon font fix.
+           The Khmer font override above also matched Streamlit's Material Symbol
+           spans, so every built-in icon rendered as its raw ligature name
+           ("keyboard_double_arrow_left", "upload", "keyboard_arrow_right").
+           Restore the icon font on those elements only; the extra ::before arrow
+           that older patches added is removed so expanders show one arrow. */
+        span[data-testid="stIconMaterial"],
+        span[data-testid="stExpanderToggleIcon"],
+        [data-testid="stIconMaterial"],
+        [data-testid="stExpanderToggleIcon"],
+        .material-symbols-rounded,
+        [class*="material-symbols"] {{
+            font-family: "Material Symbols Rounded" !important;
+            font-weight: normal !important;
+            font-style: normal !important;
+            letter-spacing: normal !important;
+            text-transform: none !important;
+            white-space: nowrap !important;
+            word-wrap: normal !important;
+            word-break: normal !important;
+            overflow-wrap: normal !important;
+            direction: ltr !important;
+            font-feature-settings: 'liga' !important;
+            -webkit-font-feature-settings: 'liga' !important;
+            -webkit-font-smoothing: antialiased !important;
+        }}
         [data-testid="stExpander"] details summary [data-testid="stIconMaterial"] {{
-            display: none !important;
-        }}
-        [data-testid="stExpander"] details summary::before {{
-            content: "▸";
-            color: {BRAND_COLOR};
-            display: inline-block;
-            flex: 0 0 1rem;
-            font-family: "Segoe UI Symbol", sans-serif !important;
-            font-size: .92rem;
-            line-height: 1;
-            margin-right: .35rem;
-            transform-origin: center;
-            transition: transform .15s ease;
-        }}
-        [data-testid="stExpander"] details[open] > summary::before {{
-            transform: rotate(90deg);
+            color: {BRAND_COLOR} !important;
         }}
         [data-testid="stTextInput"] input,
         [data-testid="stNumberInput"] input,
@@ -181,10 +189,9 @@ def inject_css() -> None:
         .stDataFrame, .stDataEditor {{
             font-size: .72rem !important;
         }}
-        [data-testid="stDataFrame"] canvas,
-        [data-testid="stDataEditor"] canvas {{
-            font-family: {FONT_FAMILY} !important;
-        }}
+        /* Note: grid cell text is painted into a <canvas>, so CSS font rules
+           cannot reach it. Cell typography follows the Streamlit theme in
+           .streamlit/config.toml. Only the DOM chrome is styled here. */
         [data-testid="stDataFrame"] [role="gridcell"],
         [data-testid="stDataEditor"] [role="gridcell"],
         [data-testid="stDataFrame"] [role="columnheader"],
@@ -574,6 +581,27 @@ GRID_NUMERIC_COLUMNS = {
     "area_m2", "cost_per_m2",
 }
 
+# Columns a BoQ reviewer actually reads. The standard schema carries 34 columns,
+# which needs ~4,500px of grid width and pushes almost everything off screen, so
+# read-only grids default to this subset and offer a "show all columns" toggle.
+GRID_CORE_COLUMNS = [
+    "edit_id",
+    "source_sheet",
+    "package_name",
+    "section_name",
+    "item_code",
+    "item_description",
+    "unit",
+    "quantity",
+    "rate",
+    "amount",
+    "material_cost",
+    "labor_cost",
+    "equipment_cost",
+    "total_cost",
+    "remarks",
+]
+
 GRID_TEXT_COMPACT_LIMITS = {
     "item_description": 105,
     "section_name": 72,
@@ -637,6 +665,41 @@ def safe_grid_dataframe(df: pd.DataFrame | None, *, editable: bool = False, comp
     return out
 
 
+def drop_blank_grid_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop columns that hold no value at all for the current selection.
+
+    A standard BoQ import always materialises all 34 schema columns even when a
+    workbook has no data for them (revision, subsection, transport, risk, ...).
+    Showing those empty columns is what makes the grid scroll sideways for
+    several screens before the first useful number appears.
+    """
+    if df is None or df.empty:
+        return df if df is not None else pd.DataFrame()
+    keep = []
+    for col in df.columns:
+        series = df[col]
+        if series.notna().sum() == 0:
+            continue
+        if not pd.api.types.is_numeric_dtype(series):
+            if series.astype(str).str.strip().replace({"nan": "", "None": "", "NaT": ""}).eq("").all():
+                continue
+        keep.append(col)
+    if not keep:
+        return df
+    return df[keep]
+
+
+def core_grid_columns(df: pd.DataFrame, show_all: bool = False) -> list[str]:
+    """Return the column order for a read-only BoQ grid."""
+    if df is None or df.empty:
+        return []
+    columns = [str(c) for c in df.columns]
+    if show_all:
+        return columns
+    core = [c for c in GRID_CORE_COLUMNS if c in columns]
+    return core or columns
+
+
 def _truncate_text(value: Any, limit: int) -> str:
     value = "" if value is None else str(value)
     if len(value) <= limit:
@@ -685,8 +748,10 @@ def _grid_width_for_column(name: str, series: pd.Series | None = None) -> str:
         return "small"
     if any(key in n for key in ["quantity", "qty", "rate", "cost", "amount", "total", "risk", "area"]):
         return "small"
-    if any(key in n for key in ["description", "remarks", "comment", "issue", "finding"]):
+    if "description" in n:
         return "large"
+    if any(key in n for key in ["remarks", "comment", "issue", "finding"]):
+        return "medium"
     if any(key in n for key in ["section", "subsection", "source_sheet", "package", "project", "source_file"]):
         return "medium"
     return "medium"
@@ -747,10 +812,18 @@ def fit_dataframe(
     column_config: dict[str, Any] | None = None,
     hide_index: bool = True,
     compact_text: bool = True,
+    drop_blank_columns: bool = True,
+    columns: list[str] | None = None,
     **kwargs: Any,
 ) -> None:
     """Render a compact dataframe with fitted columns and safe fallback."""
     safe_df = safe_grid_dataframe(df, compact_text=compact_text)
+    if columns:
+        selected = [c for c in columns if c in safe_df.columns]
+        if selected:
+            safe_df = safe_df[selected]
+    if drop_blank_columns:
+        safe_df = drop_blank_grid_columns(safe_df)
     if height is None:
         try:
             height = min(650, max(260, int(len(safe_df) * 26 + 46)))

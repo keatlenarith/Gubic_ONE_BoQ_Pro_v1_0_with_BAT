@@ -4,7 +4,7 @@ import streamlit as st
 from modules.boq_cleaner import item_rows
 from modules.cost_engine import calculate_kpis
 from modules.i18n import t
-from modules.ui_helpers import inject_css, page_header, require_data, filter_dataframe, download_dataframe_button, kpi_card, fit_dataframe
+from modules.ui_helpers import inject_css, page_header, require_data, filter_dataframe, download_dataframe_button, kpi_card, fit_dataframe, core_grid_columns
 
 st.set_page_config(page_title="BoQ Database - Gubic ONE BoQ Pro", page_icon=str(FAVICON_PATH), layout="wide")
 inject_css()
@@ -17,4 +17,11 @@ k = calculate_kpis(filtered)
 with cols[0]: kpi_card(t("filtered_items"), f"{len(filtered):,}")
 with cols[1]: kpi_card(t("filtered_cost"), k["total_project_cost"])
 with cols[2]: download_dataframe_button(filtered, "filtered_boq_items.csv")
-fit_dataframe(filtered, use_container_width=True, height=650)
+show_all = st.checkbox(t("show_all_columns"), value=False, help=t("show_all_columns_help"))
+fit_dataframe(
+    filtered,
+    use_container_width=True,
+    height=650,
+    columns=core_grid_columns(filtered, show_all),
+    drop_blank_columns=not show_all,
+)
